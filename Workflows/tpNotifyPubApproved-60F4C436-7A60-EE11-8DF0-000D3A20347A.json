@@ -1,0 +1,648 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "TPNotifyReminderNumCharSubject (ntt_TPNotifyReminderNumCharSubject)": {
+          "defaultValue": 50,
+          "type": "Int",
+          "metadata": {
+            "schemaName": "ntt_TPNotifyReminderNumCharSubject"
+          }
+        },
+        "KMSUrlTpManager (ntt_KMSUrlTpManager)": {
+          "defaultValue": "https://lab-kms.eni.com/tech-pub/manage?pubId=",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_KMSUrlTpManager"
+          }
+        },
+        "TPNotifyReminderSenderNoReply (ntt_TPNotifyReminderSenderNoReply)": {
+          "defaultValue": "no-reply@e-kms.eni.com",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_TPNotifyReminderSenderNoReply"
+          }
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "parameters": {
+              "subscriptionRequest/message": 3,
+              "subscriptionRequest/entityname": "ntt_tp_publications",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "ntt_workflowstatus",
+              "subscriptionRequest/filterexpression": "ntt_workflowstatus eq 876460002"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          },
+          "metadata": {
+            "operationMetadataId": "892c3eb1-06f2-479c-849f-ab4b16e7f572"
+          }
+        }
+      },
+      "actions": {
+        "Initialize_strListTo": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strListTo",
+                "type": "string",
+                "value": "@body('Run_a_Child_Flow_3')?['listauthors']"
+              }
+            ]
+          },
+          "runAfter": {
+            "Run_a_Child_Flow_3": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f00e0173-782a-4055-b2e8-3e76bde8c8e9"
+          }
+        },
+        "Get_Publication": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "entityName": "ntt_tp_publicationses",
+              "recordId": "@triggerOutputs()?['body/ntt_tp_publicationsid']"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          },
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "d6e913b5-baff-4a84-ac2c-d7377939bde0"
+          }
+        },
+        "Initialize_strTitle": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strTitle",
+                "type": "string",
+                "value": "Eni Technical Publications: Publication ID "
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_variable": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "5d8cbaa5-53b1-4fc8-b53d-a9bb40b49288"
+          }
+        },
+        "Append_strTitle": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strTitle",
+            "value": "@outputs('Get_Publication')?['body/ntt_id']"
+          },
+          "runAfter": {
+            "Initialize_strTitle": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "133e7d07-b112-4fa3-b21b-278e3685935a"
+          }
+        },
+        "Append_strTitle_-_2": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strTitle",
+            "value": " with title "
+          },
+          "runAfter": {
+            "Append_strTitle": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "cc95c255-8acc-4135-89a6-2533fb52b112"
+          }
+        },
+        "Initialize_variable_2": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strTemp",
+                "type": "string",
+                "value": "@outputs('Get_Publication')?['body/ntt_papertitle']"
+              }
+            ]
+          },
+          "runAfter": {
+            "Append_strTitle_-_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f009cbd9-ef9b-4c74-a643-c3ddbadae339"
+          }
+        },
+        "Condition_7": {
+          "type": "If",
+          "expression": {
+            "less": [
+              "@parameters('TPNotifyReminderNumCharSubject (ntt_TPNotifyReminderNumCharSubject)')",
+              "@length(variables('strTemp'))"
+            ]
+          },
+          "actions": {
+            "Append_strTitle_-_3": {
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strTitle",
+                "value": "@{substring(variables('strTemp'),0,parameters('TPNotifyReminderNumCharSubject (ntt_TPNotifyReminderNumCharSubject)'))}..."
+              },
+              "metadata": {
+                "operationMetadataId": "486d0be8-4bcb-4a52-89a1-b0429c29db46"
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Append_to_string_variable_8": {
+                "type": "AppendToStringVariable",
+                "inputs": {
+                  "name": "strTitle",
+                  "value": "@variables('strTemp')"
+                },
+                "metadata": {
+                  "operationMetadataId": "dd076620-7d90-4aa8-b374-626b1c1a4836"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Initialize_variable_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "4a50ea1f-bd26-4d18-bd5d-fe41abdcd66d"
+          }
+        },
+        "Initialize_strContent": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strContent",
+                "type": "string",
+                "value": "@{'<body style=\"margin: 10; padding: 10;\">\r\n<table style=\"height: 60px;text-align: center;font-size:20px; width: 800px;border-collapse: collapse;border: 1px solid #446298;\"order=\"1\">\r\n<tbody>\r\n<tr>\r\n<td style=\"background-color: #517AC4;color:white;\" >Eni Technical Publications</td>\r\n</tr>\r\n</tbody>\r\n</table>\r\n<table style=\"background-color: #517AC4;color:white;border-collapse: collapse;border: 1px solid #446298;; width: 800px; height: 60px;text-align: center;font-size:18px;\"order=\"1\">\r\n<tbody>\r\n<tr>\r\n<td style=\"width: 50%;border: 1px solid #446298;\"><div>Publication:</div><div>ID '}"
+              }
+            ]
+          },
+          "runAfter": {
+            "Get_Event": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "28143581-3718-4e44-a874-05bdea8128b7"
+          }
+        },
+        "Append_strContent_-1": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strContent",
+            "value": "@outputs('Get_Publication')?['body/ntt_id']"
+          },
+          "runAfter": {
+            "Initialize_strContentWithRole": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "71fed5c9-b440-4007-9fda-40b0d257b7ea"
+          }
+        },
+        "Append_strContent_-2": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strContent",
+            "value": "@'</div><div>Submission deadline: '"
+          },
+          "runAfter": {
+            "Append_strContent_-1": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f378c443-1a09-4557-b335-92da9f32a02f"
+          }
+        },
+        "Append_strContent_-3": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strContent",
+            "value": "@formatDateTime(addDays(outputs('Get_Publication')?['body/ntt_submissiondeadline'],1),'dd-MMM-yyyy')"
+          },
+          "runAfter": {
+            "Append_strContent_-2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "d209948a-2ca2-4dc8-be87-4d9ab3559b11"
+          }
+        },
+        "Append_strContent_-4": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strContent",
+            "value": "@'</div></td>\r\n<td style=\"width: 50%;border: 1px solid #446298;\"><div>Event:</div><div>Name: '"
+          },
+          "runAfter": {
+            "Append_strContent_-3": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "b58e9799-331d-4468-aa4f-e9baf315b61c"
+          }
+        },
+        "Get_Event": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "entityName": "ntt_tp_eventses",
+              "recordId": "@outputs('Get_Publication')?['body/_ntt_idevent_value']"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          },
+          "runAfter": {
+            "Append_to_string_variable_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "1aa07aa2-766d-4417-beb4-4a0fd3eae43b"
+          }
+        },
+        "Append_to_string_variable_9": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strContent",
+            "value": "@outputs('Get_Event')?['body/ntt_name']"
+          },
+          "runAfter": {
+            "Append_strContent_-4": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "90a9c8d5-4dfa-4b0a-917c-4cecefb179b8"
+          }
+        },
+        "Append_to_string_variable_14": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strContent",
+            "value": "</div></td>\n</tr>\n</tbody>\n</table>\n<table style=\"background-color: #517AC4;color:white;border-collapse: collapse;border: 1px solid #446298; width: 800px; height: 40px;text-align: center;font-size:14px;\"order=\"1\">\n<tbody>\n<tr>\n<td >Publicaton has been approved by external communication approver</td>\n</tr>\n</tbody>\n</table>\n<table style=\"background-color: #E3E3E3;color:#517AC4;border-collapse: collapse;border: 1px solid #446298; width: 800px; height: 40px;text-align: center;font-size:16px;\"order=\"1\">\n<tbody>\n<tr>\n<td ><a href=\"url_publication\">Access TP Manager for publication detail</a></td>\n</tr>\n</tbody>\n</table>\n<table style=\"background-color: #E3E3E3;color:#517AC4;border-collapse: collapse;border: 1px solid #446298; width: 800px; height: 40px;text-align: center;font-size:14px;\"order=\"1\">\n<tbody>\n<tr><td >"
+          },
+          "runAfter": {
+            "Condition_Event": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "435421bb-d598-43e2-ad89-ddfea9bc8b0b"
+          }
+        },
+        "Run_a_Child_Flow_2": {
+          "type": "Workflow",
+          "inputs": {
+            "host": {
+              "workflowReferenceName": "accdc264-3a60-ee11-8df0-000d3a20347a"
+            },
+            "body": {
+              "text": "@outputs('Get_Publication')?['body/ntt_id']"
+            }
+          },
+          "runAfter": {
+            "Set_variable_7": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f6a18199-fa99-4398-8fb0-b9789d91b702"
+          }
+        },
+        "Append_to_string_variable": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strContent",
+            "value": "@body('Run_a_Child_Flow_2')?['content']"
+          },
+          "runAfter": {
+            "Run_a_Child_Flow_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "a4f7cc35-6f98-4f1b-8bbc-225e8b44703b"
+          }
+        },
+        "Append_to_string_variable_15": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strContent",
+            "value": "</td>\n</tr>\n</tbody>\n</table>\n<table style=\"background-color: #E3E3E3;color:black;border-collapse: collapse;border: 1px solid #446298; width: 800px; height: 40px;text-align: center;font-size:16px;\"order=\"1\">\n<tbody>\n<tr>\n<td ><i>This is an automated mail, kindly do not reply</i></td>\n</tr>\n</tbody>\n</table>\n</body>"
+          },
+          "runAfter": {
+            "Append_to_string_variable": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "4fecf104-719d-4509-9567-18c12e5004a2"
+          }
+        },
+        "Compose": {
+          "type": "Compose",
+          "inputs": "@replace(variables('strContent'),'url_publication',concat(parameters('KMSUrlTpManager (ntt_KMSUrlTpManager)'),outputs('Get_Publication')?['body/ntt_id']))",
+          "runAfter": {
+            "Append_to_string_variable_14": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "2e3dd987-908d-451e-8815-b82918fc9297"
+          }
+        },
+        "Set_variable_7": {
+          "type": "SetVariable",
+          "inputs": {
+            "name": "strContent",
+            "value": "@{outputs('Compose')}"
+          },
+          "runAfter": {
+            "Compose": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "ca958a2b-f82d-4f47-99d4-111a859224da"
+          }
+        },
+        "Initialize_strContentWithRole": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strContentWithRole",
+                "type": "string"
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_strContent": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "22271a54-404c-413b-b816-74465cece968"
+          }
+        },
+        "Run_a_Child_Flow": {
+          "type": "Workflow",
+          "inputs": {
+            "host": {
+              "workflowReferenceName": "bb30c355-c35e-ee11-be6f-000d3a2004d7"
+            },
+            "body": {
+              "text": "@variables('strListTo')",
+              "text_1": "@variables('strListCC')",
+              "text_2": "@parameters('TPNotifyReminderSenderNoReply (ntt_TPNotifyReminderSenderNoReply)')",
+              "text_3": "@variables('strTitle')",
+              "text_4": "@variables('strContentWithRole')"
+            }
+          },
+          "runAfter": {
+            "Set_variable": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "cc5e5e76-1232-4e7a-9c70-d757bbfde909"
+          }
+        },
+        "Set_variable": {
+          "type": "SetVariable",
+          "inputs": {
+            "name": "strContentWithRole",
+            "value": "@{ replace(variables('strContent'),'reviewer_role','Applicant')}"
+          },
+          "runAfter": {
+            "Append_to_string_variable_15": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "91472a2e-02d0-4e4e-8c5e-baf64db05662"
+          }
+        },
+        "Run_a_Child_Flow_3": {
+          "type": "Workflow",
+          "inputs": {
+            "host": {
+              "workflowReferenceName": "c617e7ed-8460-ee11-8df0-000d3a2004d7"
+            },
+            "body": {
+              "text": "@outputs('Get_Publication')?['body/ntt_tp_publicationsid']"
+            }
+          },
+          "runAfter": {
+            "Get_Publication": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f40355d6-f889-45a7-a30d-b43e6f4fd062"
+          }
+        },
+        "Run_a_Child_Flow_4": {
+          "type": "Workflow",
+          "inputs": {
+            "host": {
+              "workflowReferenceName": "0aeb70ea-9260-ee11-8df0-000d3a2d085b"
+            },
+            "body": {
+              "text": "@outputs('Get_Publication')?['body/ntt_tp_publicationsid']"
+            }
+          },
+          "runAfter": {
+            "Initialize_strListTo": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "a3a85cf9-15ff-4acd-9114-1232a91101db"
+          }
+        },
+        "Append_to_string_variable_2": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strTitle",
+            "value": " has been APPROVED"
+          },
+          "runAfter": {
+            "Condition_7": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f7d478b1-b828-4503-b739-2df751e513f8"
+          }
+        },
+        "Initialize_variable": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strListCC",
+                "type": "string",
+                "value": "@body('Run_a_Child_Flow_4')?['listrev']"
+              }
+            ]
+          },
+          "runAfter": {
+            "Run_a_Child_Flow_4": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "9eb7bded-8ea8-4c4c-bd2e-f5739436ffec"
+          }
+        },
+        "Condition_Event": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "not": {
+                  "equals": [
+                    "@body('Get_Event')?['ntt_neweventtype']",
+                    876460003
+                  ]
+                }
+              }
+            ]
+          },
+          "actions": {
+            "Append_to_string_variable_10": {
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strContent",
+                "value": "@' Date: '"
+              },
+              "metadata": {
+                "operationMetadataId": "0f5f999f-7360-4589-a6ac-b726afc06805"
+              }
+            },
+            "Append_to_string_variable_11": {
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strContent",
+                "value": "@formatDateTime(addDays(outputs('Get_Event')?['body/ntt_startdate'],1),'dd-MMM-yyyy')"
+              },
+              "runAfter": {
+                "Append_to_string_variable_10": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "274a082f-88e6-4eb7-8d2b-e2ad566744e4"
+              }
+            },
+            "Append_to_string_variable_12": {
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strContent",
+                "value": "@'</div><div>Location: '"
+              },
+              "runAfter": {
+                "Append_to_string_variable_11": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "84506152-2bad-4abf-83f3-35e95960a764"
+              }
+            },
+            "Append_to_string_variable_13": {
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strContent",
+                "value": "@outputs('Get_Event')?['body/ntt_location']"
+              },
+              "runAfter": {
+                "Append_to_string_variable_12": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "f1d6961a-e4db-4799-9ff2-a8f7436f91d5"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "runAfter": {
+            "Append_to_string_variable_9": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "90a9c1bf-6d79-4270-9b23-1a3dd7feb47f"
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

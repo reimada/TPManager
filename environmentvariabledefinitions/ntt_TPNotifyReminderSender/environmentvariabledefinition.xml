@@ -1,0 +1,11 @@
+<environmentvariabledefinition schemaname="ntt_TPNotifyReminderSender">
+  <defaultvalue>action-required@e-kms.eni.com</defaultvalue>
+  <displayname default="TPNotifyReminderSender">
+    <label description="TPNotifyReminderSender" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.12</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

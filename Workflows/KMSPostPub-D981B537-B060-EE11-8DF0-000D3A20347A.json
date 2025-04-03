@@ -1,0 +1,667 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "ntt_sharedsharepointonline_3b608"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "TPSharepointSite (ntt_TPSharepointSite)": {
+          "defaultValue": "https://enispa.sharepoint.com/sites/TP-Test",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_TPSharepointSite"
+          }
+        },
+        "KMSToken (ntt_KMSToken)": {
+          "defaultValue": "821b33f0-a74d-45d3-bc21-eb47d842f552",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_KMSToken"
+          }
+        },
+        "KMSUrlBase (ntt_KMSUrlBase)": {
+          "defaultValue": "https://lab-kms.eni.com/in/kms/lab/portal/api/techpub",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_KMSUrlBase"
+          }
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "9e0031d3-baac-47cc-8ee3-9402aa6aab9a"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 3,
+              "subscriptionRequest/entityname": "ntt_tp_publications",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "ntt_workflowstatus",
+              "subscriptionRequest/filterexpression": "ntt_workflowstatus eq 876460002 and ntt_is_publishonkms eq true"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "HTTP": {
+          "runAfter": {
+            "Compose_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "2503a968-815c-4ecd-8429-f18ff1bbc45b"
+          },
+          "type": "Http",
+          "inputs": {
+            "method": "POST",
+            "uri": "@{parameters('KMSUrlBase (ntt_KMSUrlBase)')}/posts",
+            "headers": {
+              "x-api-key": "@parameters('KMSToken (ntt_KMSToken)')",
+              "Content-Type": "application/x-www-form-urlencoded"
+            },
+            "body": "@outputs('Compose_2')"
+          }
+        },
+        "Get_Event": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "534ad818-8b18-40cb-b380-0102d34bca46"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_eventses",
+              "recordId": "@triggerOutputs()?['body/_ntt_idevent_value']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Condition": {
+          "actions": {
+            "Set_variable": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "1a4de1a3-f198-4264-871a-90fef8b4408d"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "strPlain",
+                "value": "ANNOUNCEMENT: The document \"@{triggerOutputs()?['body/ntt_papertitle']}\" with ID @{triggerOutputs()?['body/ntt_id']} has been approved for the publication at the @{outputs('Get_Event')?['body/ntt_neweventtype@OData.Community.Display.V1.FormattedValue']} \"@{outputs('Get_Event')?['body/ntt_name']}\" @{outputs('Get_Event')?['body/ntt_link']} \nShort abstract of the document: \"@{triggerOutputs()?['body/ntt_description']}\" \nFor further details please refer to the Author(s): @{triggerOutputs()?['body/ntt_authors4kms']}, CoAuthor(s):@{variables('strCoAuthorsEni')}\n@{variables('strHashTag')}"
+              }
+            }
+          },
+          "runAfter": {
+            "A2Each_Audience": [
+              "Succeeded"
+            ]
+          },
+          "else": {
+            "actions": {
+              "Condition_2": {
+                "actions": {
+                  "Set_variable_2": {
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "48326419-eb1a-41a0-a29a-b2c2933c05ef"
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "strPlain",
+                      "value": "ANNOUNCEMENT: The document \"@{triggerOutputs()?['body/ntt_papertitle']}\" with ID @{triggerOutputs()?['body/ntt_id']} has been approved for the publication at the @{outputs('Get_Event')?['body/ntt_neweventtype@OData.Community.Display.V1.FormattedValue']} \"@{outputs('Get_Event')?['body/ntt_name']}\" in @{outputs('Get_Event')?['body/ntt_location']} from @{formatDateTime(outputs('Get_Event')?['body/ntt_startdate'],'MM-dd-yyyy')} to @{formatDateTime(outputs('Get_Event')?['body/ntt_enddate'],'MM-dd-yyyy')}\nShort abstract of the document: \"@{triggerOutputs()?['body/ntt_description']}\"\nFor further details please refer to the Author(s):@{triggerOutputs()?['body/ntt_authors4kms']} , CoAuthor(s):@{variables('strCoAuthorsEni')}\n@{variables('strHashTag')}"
+                    }
+                  }
+                },
+                "runAfter": {},
+                "else": {
+                  "actions": {
+                    "Set_variable_3": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "20681733-b850-435f-ac4e-5a44223d6f6c"
+                      },
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "strPlain",
+                        "value": "ANNOUNCEMENT: The document \"@{triggerOutputs()?['body/ntt_papertitle']}\" with ID @{triggerOutputs()?['body/ntt_id']} has been approved for the publication at the @{outputs('Get_Event')?['body/ntt_neweventtype@OData.Community.Display.V1.FormattedValue']} \"@{outputs('Get_Event')?['body/ntt_name']}\" from @{formatDateTime(outputs('Get_Event')?['body/ntt_startdate'],'MM-dd-yyyy')} to @{formatDateTime(outputs('Get_Event')?['body/ntt_enddate'],'MM-dd-yyyy')}\nShort abstract of the document: \"@{triggerOutputs()?['body/ntt_description']}\"\nFor further details please refer to the Author(s):@{triggerOutputs()?['body/ntt_authors4kms']} , CoAuthor(s):@{variables('strCoAuthorsEni')}\n@{variables('strHashTag')}"
+                      }
+                    }
+                  }
+                },
+                "expression": {
+                  "not": {
+                    "equals": [
+                      "@outputs('Get_Event')?['body/ntt_location']",
+                      "@null"
+                    ]
+                  }
+                },
+                "metadata": {
+                  "operationMetadataId": "9b3a8578-c446-4187-8695-10b132758bcc"
+                },
+                "type": "If"
+              }
+            }
+          },
+          "expression": {
+            "and": [
+              {
+                "not": {
+                  "equals": [
+                    "@outputs('Get_Event')?['body/ntt_link']",
+                    ""
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "equals": [
+                    "@outputs('Get_Event')?['body/ntt_link']",
+                    "@null"
+                  ]
+                }
+              }
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "4d1ac446-64a2-4f76-b136-7a7dcc278665"
+          },
+          "type": "If"
+        },
+        "Initialize_strPlain": {
+          "runAfter": {
+            "Get_Event": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f402098c-2435-456c-a30a-fc7d65210dba"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strPlain",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Get_file_content_using_path": {
+          "runAfter": {
+            "Condition": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "4e50bfc0-93e4-40f1-8ed7-6d3385abd605"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetFileContentByPath",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('TPSharepointSite (ntt_TPSharepointSite)')",
+              "path": "@triggerOutputs()?['body/ntt_attachmentlink']",
+              "inferContentType": true
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Compose_Content": {
+          "runAfter": {
+            "Get_file_content_using_path": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f4d3ce80-2648-4d87-8d1d-5289c29903c3"
+          },
+          "type": "Compose",
+          "inputs": "@body('Get_file_content_using_path')['$content']"
+        },
+        "Compose_Content_Type": {
+          "runAfter": {
+            "Compose_Content": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "42d77c97-09fe-4796-a10a-6371e21a7d81"
+          },
+          "type": "Compose",
+          "inputs": "@body('Get_file_content_using_path')['$content-type']"
+        },
+        "Initialize_strCoAuthorsEni": {
+          "runAfter": {
+            "Initialize_strPlain": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "fea825df-4d49-4028-90c8-f505af3ebace"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strCoAuthorsEni",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "List_rows_CoAuthorsEni": {
+          "runAfter": {
+            "Initialize_strCoAuthorsEni": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "9cfca7a1-6ef5-4c92-8883-aed64bf5870a"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_pub_coauthorenis",
+              "$filter": "ntt_publicationdesc eq '@{triggerOutputs()?['body/ntt_id']}'"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "A2Each_CoAuthorsEni": {
+          "foreach": "@outputs('List_rows_CoAuthorsEni')?['body/value']",
+          "actions": {
+            "Condition_3": {
+              "actions": {
+                "Append_to_string_variable_2": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "5d5facfb-cf3b-4e70-a835-56d5ba8b548d"
+                  },
+                  "type": "AppendToStringVariable",
+                  "inputs": {
+                    "name": "strCoAuthorsEni",
+                    "value": ","
+                  }
+                }
+              },
+              "runAfter": {},
+              "expression": {
+                "not": {
+                  "equals": [
+                    "@variables('strCoAuthorsEni')",
+                    "@''"
+                  ]
+                }
+              },
+              "metadata": {
+                "operationMetadataId": "9ec3136a-e7b9-4580-92c4-0a5dcb1e5862"
+              },
+              "type": "If"
+            },
+            "Append_to_string_variable": {
+              "runAfter": {
+                "Condition_3": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "eddcf3e3-6ea7-47fa-ad88-281a0de4d987"
+              },
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strCoAuthorsEni",
+                "value": "@concat('@[',items('A2Each_CoAuthorsEni')?['ntt_userdesc'],'](',items('A2Each_CoAuthorsEni')?['ntt_userkmsid'],')')"
+              }
+            }
+          },
+          "runAfter": {
+            "List_rows_CoAuthorsEni": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "b51247c2-29d8-4ab7-a401-7a07ed1ff7f3"
+          },
+          "type": "Foreach"
+        },
+        "Initialize_Hashtag": {
+          "runAfter": {
+            "A2Each_CoAuthorsEni": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "86e1285f-dd77-493a-9d31-a15b87cdbce0"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strHashTag",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Initialize_Audience": {
+          "runAfter": {
+            "A2Each_HashTag": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "24d29a8f-f300-4599-b735-2098ae95ae3a"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strAudience",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "List_rows_HashTags": {
+          "runAfter": {
+            "Initialize_Hashtag": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f9fa0c13-ecbf-400d-8fb9-e17233b74bf9"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_pub_tagses",
+              "$filter": "ntt_tagtype eq 1 and ntt_publicationdesc eq '@{triggerOutputs()?['body/ntt_id']}'"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "A2Each_HashTag": {
+          "foreach": "@outputs('List_rows_HashTags')?['body/value']",
+          "actions": {
+            "Condition_4": {
+              "actions": {},
+              "runAfter": {},
+              "expression": {
+                "not": {
+                  "equals": [
+                    "@variables('strHashTag')",
+                    "@''"
+                  ]
+                }
+              },
+              "metadata": {
+                "operationMetadataId": "abbaa923-b891-4140-bf59-0009f27a3529"
+              },
+              "type": "If"
+            },
+            "Append_HashTag": {
+              "runAfter": {
+                "Condition_4": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "2ab3d080-b700-4132-a46c-22ff3c0930be"
+              },
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strHashTag",
+                "value": "@concat('#[',items('A2Each_HashTag')?['ntt_tagdesc'],'](',items('A2Each_HashTag')?['ntt_kmsid'],')')"
+              }
+            }
+          },
+          "runAfter": {
+            "List_rows_HashTags": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f6967181-11c6-4d11-a77c-7214891a17f4"
+          },
+          "type": "Foreach"
+        },
+        "List_rows_Audience": {
+          "runAfter": {
+            "Initialize_Audience": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "21107cf5-7131-4fbf-bc55-5457ee11bfe3"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_pub_tagses",
+              "$filter": "ntt_tagtype eq 0 and ntt_publicationdesc eq '@{triggerOutputs()?['body/ntt_id']}'"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "A2Each_Audience": {
+          "foreach": "@outputs('List_rows_Audience')?['body/value']",
+          "actions": {
+            "Condition_5": {
+              "actions": {
+                "Append_to_string_variable_5": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "2ecbd75e-9cb6-47d4-bffd-28db858d599d"
+                  },
+                  "type": "AppendToStringVariable",
+                  "inputs": {
+                    "name": "strAudience",
+                    "value": ","
+                  }
+                }
+              },
+              "runAfter": {},
+              "expression": {
+                "not": {
+                  "equals": [
+                    "@variables('strAudience')",
+                    ""
+                  ]
+                }
+              },
+              "metadata": {
+                "operationMetadataId": "d5cdc261-f4f7-4248-beb9-c37a2d5b15af"
+              },
+              "type": "If"
+            },
+            "Append_to_string_variable_4": {
+              "runAfter": {
+                "Condition_5": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "8377fef8-6724-4194-9041-8da719311fa4"
+              },
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strAudience",
+                "value": "@items('A2Each_Audience')?['ntt_kmsid']"
+              }
+            }
+          },
+          "runAfter": {
+            "List_rows_Audience": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "fca13e4f-51b1-4750-8378-ec51bfb294f6"
+          },
+          "type": "Foreach"
+        },
+        "Initialize_strContentAudience": {
+          "runAfter": {
+            "Compose_FileName": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "54d0d787-06b0-49d5-8ddc-8e197c26c195"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strContentAudience",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "test_Audience": {
+          "actions": {
+            "Set_variable_5": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "e0f5b32d-1ed3-44f2-860f-4b4f5f9cbde5"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "strContentAudience",
+                "value": "@{concat('&audience=',encodeUriComponent(variables('strAudience')))}"
+              }
+            }
+          },
+          "runAfter": {
+            "Initialize_strContentAudience": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "not": {
+              "equals": [
+                "@variables('strAudience')",
+                ""
+              ]
+            }
+          },
+          "metadata": {
+            "operationMetadataId": "182ec026-8c68-4384-b1b1-8a28526bec38"
+          },
+          "type": "If"
+        },
+        "Compose_2": {
+          "runAfter": {
+            "test_Audience": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "2e1556ce-e68a-4b00-a9cb-36fe11a78f2c"
+          },
+          "type": "Compose",
+          "inputs": "@concat('plainContent=',encodeUriComponent(variables('strPlain')),'&fileToUpload=',encodeUriComponent(outputs('Compose_Content')),'&fileMimeType=',encodeUriComponent(outputs('Compose_Content_Type')),'&fileName=',encodeUriComponent(outputs('Compose_FileName')),variables('strContentAudience'))"
+        },
+        "Compose_FileName": {
+          "runAfter": {
+            "Compose_Content_Type": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "0c79a8fa-a877-4c7a-a8fd-ecd5ceaa2bbc"
+          },
+          "type": "Compose",
+          "inputs": "@triggerOutputs()?['body/ntt_attachmentorigfilename']"
+        },
+        "Update_a_row": {
+          "runAfter": {
+            "HTTP": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f58bb449-a19d-4d9a-bc44-5cf6083e4174"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_publicationses",
+              "recordId": "@triggerOutputs()?['body/ntt_tp_publicationsid']",
+              "item/ntt_is_published": true
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

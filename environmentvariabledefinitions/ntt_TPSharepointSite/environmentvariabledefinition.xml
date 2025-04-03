@@ -1,0 +1,11 @@
+<environmentvariabledefinition schemaname="ntt_TPSharepointSite">
+  <defaultvalue>https://enispa.sharepoint.com/sites/TP-Dev</defaultvalue>
+  <displayname default="TPSharepointSite">
+    <label description="TPSharepointSite" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.0</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

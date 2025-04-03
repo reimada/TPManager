@@ -1,0 +1,11 @@
+<environmentvariabledefinition schemaname="ntt_KMSUrlBase">
+  <defaultvalue>https://lab-kms.eni.com/in/kms/lab/portal/api/techpub</defaultvalue>
+  <displayname default="KMSUrlBase">
+    <label description="KMSUrlBase" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.7</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

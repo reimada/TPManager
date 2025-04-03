@@ -1,0 +1,886 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_commondataserviceforapps_1": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "ntt_sharedcommondataserviceforapps_01e11"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "6557a876-19ac-4358-b80b-efd17f413a4e"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 3,
+              "subscriptionRequest/entityname": "ntt_tp_pub_stepreview",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "ntt_dateaction"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "strPubId": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "1401d00e-6302-4512-8ca8-e8dd7e0e00fc"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strPubId",
+                "type": "string",
+                "value": "@triggerOutputs()?['body/_ntt_tp_publications_value']"
+              }
+            ]
+          }
+        },
+        "numStepNo": {
+          "runAfter": {
+            "strPubId": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "26628f23-128a-43f7-96c2-a132c28557e0"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "numStepNo",
+                "type": "integer",
+                "value": "@triggerOutputs()?['body/ntt_stepno']"
+              }
+            ]
+          }
+        },
+        "List_rows": {
+          "runAfter": {
+            "newStepToAdd": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "34d13aa2-0837-41eb-8342-9577ca945a7b"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_pub_stepreviews",
+              "$filter": "(ntt_stepno eq @{variables('numStepNo')} and  _ntt_tp_publications_value eq @{variables('strPubId')} and ntt_optional eq false)"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Apply_to_each": {
+          "foreach": "@outputs('List_rows')?['body/value']",
+          "actions": {
+            "Condition": {
+              "actions": {
+                "Set_isNotComplete": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "7121e24c-2794-4dcb-bbfe-4f9b70c2e77e"
+                  },
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "isNotComplete",
+                    "value": "@true"
+                  }
+                }
+              },
+              "runAfter": {},
+              "expression": {
+                "equals": [
+                  "@items('Apply_to_each')?['ntt_isactive']",
+                  "@true"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "82741007-6801-42d0-b245-8dd6b550030f"
+              },
+              "type": "If"
+            }
+          },
+          "runAfter": {
+            "List_rows": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "3cb702d0-5ed8-4b17-97c0-160935faac0b"
+          },
+          "type": "Foreach"
+        },
+        "isNotComplete": {
+          "runAfter": {
+            "Condition_RFP_SUBFP": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "87389198-93b8-4726-ab8c-cd7511099092"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "isNotComplete",
+                "type": "boolean",
+                "value": "@false"
+              }
+            ]
+          }
+        },
+        "isComplete": {
+          "actions": {},
+          "runAfter": {
+            "Apply_to_each": [
+              "Succeeded"
+            ]
+          },
+          "else": {
+            "actions": {
+              "Get_a_row_by_ID": {
+                "runAfter": {},
+                "metadata": {
+                  "operationMetadataId": "5c5a10f2-99c6-45ff-b6eb-72c27a45673c"
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "shared_commondataserviceforapps",
+                    "operationId": "GetItem",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                  },
+                  "parameters": {
+                    "entityName": "ntt_tp_publicationses",
+                    "recordId": "@variables('strPubId')"
+                  },
+                  "authentication": "@parameters('$authentication')"
+                }
+              },
+              "Switch_Complete_StatusN": {
+                "runAfter": {
+                  "Get_a_row_by_ID": [
+                    "Succeeded"
+                  ]
+                },
+                "cases": {
+                  "Case_Step1": {
+                    "case": 1,
+                    "actions": {
+                      "Condition_2": {
+                        "actions": {
+                          "Update_a_row": {
+                            "runAfter": {},
+                            "metadata": {
+                              "operationMetadataId": "8dcfbec5-362a-48f9-99bd-23bf11dbd376"
+                            },
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "host": {
+                                "connectionName": "shared_commondataserviceforapps",
+                                "operationId": "UpdateRecord",
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                              },
+                              "parameters": {
+                                "entityName": "ntt_tp_publicationses",
+                                "recordId": "@variables('strPubId')",
+                                "item/ntt_step1status": 876460003,
+                                "item/ntt_step2status": 876460001,
+                                "item/ntt_step3status": 876460002
+                              },
+                              "authentication": "@parameters('$authentication')"
+                            }
+                          },
+                          "Set_variable_2": {
+                            "runAfter": {
+                              "Apply_to_each_2": [
+                                "Succeeded"
+                              ]
+                            },
+                            "metadata": {
+                              "operationMetadataId": "68d836b5-709b-4828-878e-a8f8c36b13a2"
+                            },
+                            "type": "SetVariable",
+                            "inputs": {
+                              "name": "newStepToAdd",
+                              "value": 2
+                            }
+                          },
+                          "List_rows_3": {
+                            "runAfter": {
+                              "Update_a_row": [
+                                "Succeeded"
+                              ]
+                            },
+                            "metadata": {
+                              "operationMetadataId": "2187e999-ec07-49e7-a1c6-86e151b36db2"
+                            },
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "host": {
+                                "connectionName": "shared_commondataserviceforapps",
+                                "operationId": "ListRecords",
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                              },
+                              "parameters": {
+                                "entityName": "ntt_tp_pub_stepreviews",
+                                "$filter": "(ntt_stepno eq @{add(variables('newStepToAdd'),variables('numStepNo'))} and  _ntt_tp_publications_value eq @{variables('strPubId')})"
+                              },
+                              "authentication": "@parameters('$authentication')"
+                            }
+                          },
+                          "Apply_to_each_2": {
+                            "foreach": "@outputs('List_rows_3')?['body/value']",
+                            "actions": {
+                              "Update_a_row_7": {
+                                "runAfter": {},
+                                "metadata": {
+                                  "operationMetadataId": "a0a75b79-ea2f-459c-95e3-9224b14a98c0"
+                                },
+                                "type": "OpenApiConnection",
+                                "inputs": {
+                                  "host": {
+                                    "connectionName": "shared_commondataserviceforapps",
+                                    "operationId": "UpdateRecord",
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                                  },
+                                  "parameters": {
+                                    "entityName": "ntt_tp_pub_stepreviews",
+                                    "recordId": "@items('Apply_to_each_2')?['ntt_tp_pub_stepreviewid']",
+                                    "item/ntt_actiondone": true
+                                  },
+                                  "authentication": "@parameters('$authentication')"
+                                }
+                              }
+                            },
+                            "runAfter": {
+                              "List_rows_3": [
+                                "Succeeded"
+                              ]
+                            },
+                            "metadata": {
+                              "operationMetadataId": "d750f81f-133e-420b-8bdf-efe4d8e8f8a6"
+                            },
+                            "type": "Foreach"
+                          }
+                        },
+                        "runAfter": {},
+                        "else": {
+                          "actions": {
+                            "Update_a_row_6": {
+                              "runAfter": {},
+                              "metadata": {
+                                "operationMetadataId": "d103d75e-fe55-4899-9dad-2fd8226a97bf"
+                              },
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "connectionName": "shared_commondataserviceforapps",
+                                  "operationId": "UpdateRecord",
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                                },
+                                "parameters": {
+                                  "entityName": "ntt_tp_publicationses",
+                                  "recordId": "@variables('strPubId')",
+                                  "item/ntt_step1status": 876460003,
+                                  "item/ntt_step2status": 876460002
+                                },
+                                "authentication": "@parameters('$authentication')"
+                              }
+                            }
+                          }
+                        },
+                        "expression": {
+                          "equals": [
+                            "@outputs('Get_a_row_by_ID')?['body/ntt_skipstep2']",
+                            "@true"
+                          ]
+                        },
+                        "metadata": {
+                          "operationMetadataId": "265ade77-24db-4a50-b1c2-14f934f90b3b"
+                        },
+                        "type": "If"
+                      }
+                    }
+                  },
+                  "Case_Step2": {
+                    "case": 2,
+                    "actions": {
+                      "Update_a_row_2": {
+                        "runAfter": {},
+                        "metadata": {
+                          "operationMetadataId": "3bc15154-9761-4312-b759-6f498bfa94e6"
+                        },
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "shared_commondataserviceforapps",
+                            "operationId": "UpdateRecord",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                          },
+                          "parameters": {
+                            "entityName": "ntt_tp_publicationses",
+                            "recordId": "@variables('strPubId')",
+                            "item/ntt_step2status": 876460003,
+                            "item/ntt_step3status": 876460002
+                          },
+                          "authentication": "@parameters('$authentication')"
+                        }
+                      }
+                    }
+                  },
+                  "Case_Step3": {
+                    "case": 3,
+                    "actions": {
+                      "Condition_4": {
+                        "actions": {
+                          "Update_a_row_10": {
+                            "runAfter": {},
+                            "metadata": {
+                              "operationMetadataId": "0a90eeab-42b3-445e-9d61-afca8fc63907"
+                            },
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "host": {
+                                "connectionName": "shared_commondataserviceforapps_1",
+                                "operationId": "UpdateRecord",
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                              },
+                              "parameters": {
+                                "entityName": "ntt_tp_publicationses",
+                                "recordId": "@variables('strPubId')",
+                                "item/ntt_step3status": 876460003,
+                                "item/ntt_step4status": 876460001,
+                                "item/ntt_step5status": 876460002
+                              },
+                              "authentication": "@parameters('$authentication')"
+                            }
+                          },
+                          "List_rows_5": {
+                            "runAfter": {
+                              "Update_a_row_10": [
+                                "Succeeded"
+                              ]
+                            },
+                            "metadata": {
+                              "operationMetadataId": "32cec2c4-fe5c-4c84-bd61-946b34fc59a3"
+                            },
+                            "type": "OpenApiConnection",
+                            "inputs": {
+                              "host": {
+                                "connectionName": "shared_commondataserviceforapps_1",
+                                "operationId": "ListRecords",
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                              },
+                              "parameters": {
+                                "entityName": "ntt_tp_pub_stepreviews",
+                                "$filter": "(ntt_stepno eq @{add(variables('newStepToAdd'),variables('numStepNo'))} and  _ntt_tp_publications_value eq @{variables('strPubId')})"
+                              },
+                              "authentication": "@parameters('$authentication')"
+                            }
+                          },
+                          "Apply_to_each_7": {
+                            "foreach": "@outputs('List_rows_5')?['body/value']",
+                            "actions": {
+                              "Update_a_row_12": {
+                                "runAfter": {},
+                                "metadata": {
+                                  "operationMetadataId": "d14ca845-9db0-4f2f-81cd-e05fc6960e8e"
+                                },
+                                "type": "OpenApiConnection",
+                                "inputs": {
+                                  "host": {
+                                    "connectionName": "shared_commondataserviceforapps_1",
+                                    "operationId": "UpdateRecord",
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                                  },
+                                  "parameters": {
+                                    "entityName": "ntt_tp_pub_stepreviews",
+                                    "recordId": "@items('Apply_to_each_7')?['ntt_tp_pub_stepreviewid']",
+                                    "item/ntt_actiondone": true
+                                  },
+                                  "authentication": "@parameters('$authentication')"
+                                }
+                              }
+                            },
+                            "runAfter": {
+                              "List_rows_5": [
+                                "Succeeded"
+                              ]
+                            },
+                            "metadata": {
+                              "operationMetadataId": "70fe62fe-91d4-4e2f-b28e-9bee09991a0a"
+                            },
+                            "type": "Foreach"
+                          },
+                          "Set_variable": {
+                            "runAfter": {
+                              "Apply_to_each_7": [
+                                "Succeeded"
+                              ]
+                            },
+                            "metadata": {
+                              "operationMetadataId": "3e5fb728-62fd-4041-8119-fc0eb9db7a27"
+                            },
+                            "type": "SetVariable",
+                            "inputs": {
+                              "name": "newStepToAdd",
+                              "value": 2
+                            }
+                          }
+                        },
+                        "runAfter": {},
+                        "else": {
+                          "actions": {
+                            "Update_a_row_3": {
+                              "runAfter": {},
+                              "metadata": {
+                                "operationMetadataId": "e2146f93-2be6-413e-a339-0a5b6fe58562"
+                              },
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "connectionName": "shared_commondataserviceforapps_1",
+                                  "operationId": "UpdateRecord",
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                                },
+                                "parameters": {
+                                  "entityName": "ntt_tp_publicationses",
+                                  "recordId": "@variables('strPubId')",
+                                  "item/ntt_step3status": 876460003,
+                                  "item/ntt_step4status": 876460002
+                                },
+                                "authentication": "@parameters('$authentication')"
+                              }
+                            }
+                          }
+                        },
+                        "expression": {
+                          "equals": [
+                            "@outputs('Get_a_row_by_ID')?['body/ntt_is_transfercopyrightreq']",
+                            "@false"
+                          ]
+                        },
+                        "metadata": {
+                          "operationMetadataId": "cff523ec-b5e4-4ea7-8923-3fda1b573ba1"
+                        },
+                        "type": "If"
+                      }
+                    }
+                  },
+                  "Case_Step4": {
+                    "case": 4,
+                    "actions": {
+                      "Update_a_row_4": {
+                        "runAfter": {},
+                        "metadata": {
+                          "operationMetadataId": "e69e36eb-0f47-4a8c-b0a7-acdef705dcc4"
+                        },
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "shared_commondataserviceforapps",
+                            "operationId": "UpdateRecord",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                          },
+                          "parameters": {
+                            "entityName": "ntt_tp_publicationses",
+                            "recordId": "@variables('strPubId')",
+                            "item/ntt_step4status": 876460003,
+                            "item/ntt_step5status": 876460002
+                          },
+                          "authentication": "@parameters('$authentication')"
+                        }
+                      }
+                    }
+                  },
+                  "Case_Step5": {
+                    "case": 5,
+                    "actions": {
+                      "Update_a_row_5": {
+                        "runAfter": {},
+                        "metadata": {
+                          "operationMetadataId": "42b08b56-2160-46cc-b42f-6f0d40e80622"
+                        },
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "shared_commondataserviceforapps",
+                            "operationId": "UpdateRecord",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                          },
+                          "parameters": {
+                            "entityName": "ntt_tp_publicationses",
+                            "recordId": "@variables('strPubId')",
+                            "item/ntt_step5status": 876460003,
+                            "item/ntt_approvaldate": "@utcNow()",
+                            "item/ntt_workflowstatus": 876460002
+                          },
+                          "authentication": "@parameters('$authentication')"
+                        }
+                      }
+                    }
+                  }
+                },
+                "default": {
+                  "actions": {}
+                },
+                "expression": "@variables('numStepNo')",
+                "metadata": {
+                  "operationMetadataId": "122970e1-2738-4e0d-8e02-4d63bb5a70dd"
+                },
+                "type": "Switch"
+              },
+              "Condition_3": {
+                "actions": {
+                  "List_rows_2": {
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "e77ad180-a001-4866-8306-105cb834308f"
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "shared_commondataserviceforapps",
+                        "operationId": "ListRecords",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                      },
+                      "parameters": {
+                        "entityName": "ntt_tp_pub_stepreviews",
+                        "$filter": "(ntt_stepno eq @{add(variables('newStepToAdd'),variables('numStepNo'))} and  _ntt_tp_publications_value eq @{variables('strPubId')} and ntt_role ne 876460005)"
+                      },
+                      "authentication": "@parameters('$authentication')"
+                    }
+                  },
+                  "Apply_to_each_3": {
+                    "foreach": "@outputs('List_rows_2')?['body/value']",
+                    "actions": {
+                      "Update_a_row_8": {
+                        "runAfter": {},
+                        "metadata": {
+                          "operationMetadataId": "d144881d-8a11-4f36-a0a8-efd874d73d22"
+                        },
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "shared_commondataserviceforapps",
+                            "operationId": "UpdateRecord",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                          },
+                          "parameters": {
+                            "entityName": "ntt_tp_pub_stepreviews",
+                            "recordId": "@items('Apply_to_each_3')?['ntt_tp_pub_stepreviewid']",
+                            "item/ntt_isactive": true
+                          },
+                          "authentication": "@parameters('$authentication')"
+                        }
+                      }
+                    },
+                    "runAfter": {
+                      "List_rows_2": [
+                        "Succeeded"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "f2a56119-ddd9-4b24-983f-9eef5d1f658b"
+                    },
+                    "type": "Foreach"
+                  }
+                },
+                "runAfter": {
+                  "Switch_Complete_StatusN": [
+                    "Succeeded"
+                  ]
+                },
+                "expression": {
+                  "less": [
+                    "@variables('numStepNo')",
+                    5
+                  ]
+                },
+                "metadata": {
+                  "operationMetadataId": "1be8dd25-ee9d-4182-a868-f4c284463de5"
+                },
+                "type": "If"
+              },
+              "List_rows_4": {
+                "runAfter": {
+                  "Condition_3": [
+                    "Succeeded"
+                  ]
+                },
+                "metadata": {
+                  "operationMetadataId": "3d989aed-a121-4c5b-888a-f53ff22e1a97"
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "shared_commondataserviceforapps",
+                    "operationId": "ListRecords",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                  },
+                  "parameters": {
+                    "entityName": "ntt_tp_pub_stepreviews",
+                    "$filter": "(ntt_stepno eq @{variables('numStepNo')} and  _ntt_tp_publications_value eq @{variables('strPubId')} and ntt_isconsult eq true)"
+                  },
+                  "authentication": "@parameters('$authentication')"
+                }
+              },
+              "Apply_to_each_4": {
+                "foreach": "@outputs('List_rows_4')?['body/value']",
+                "actions": {
+                  "Update_a_row_9": {
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "d87dd702-946c-46ef-8456-e9325fbe91b0"
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "shared_commondataserviceforapps",
+                        "operationId": "UpdateRecord",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                      },
+                      "parameters": {
+                        "entityName": "ntt_tp_pub_stepreviews",
+                        "recordId": "@items('Apply_to_each_4')?['ntt_tp_pub_stepreviewid']",
+                        "item/ntt_isactive": false
+                      },
+                      "authentication": "@parameters('$authentication')"
+                    }
+                  }
+                },
+                "runAfter": {
+                  "List_rows_4": [
+                    "Succeeded"
+                  ]
+                },
+                "metadata": {
+                  "operationMetadataId": "a1ba6ac9-982e-4c32-acd9-3779894d4deb"
+                },
+                "type": "Foreach"
+              }
+            }
+          },
+          "expression": {
+            "equals": [
+              "@variables('isNotComplete')",
+              "@true"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "b54af2f9-c046-4d4e-af4c-0e8150c378a8"
+          },
+          "type": "If"
+        },
+        "newStepToAdd": {
+          "runAfter": {
+            "isNotComplete": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "ef428f94-9bcd-4d57-97e6-f4521a172b93"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "newStepToAdd",
+                "type": "integer",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "Condition_RFP_SUBFP": {
+          "actions": {
+            "List_rows_RFP": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "bd68866d-c1b9-4702-a96d-d477f3bbd183"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps_1",
+                  "operationId": "ListRecords",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_pub_stepreviews",
+                  "$filter": "ntt_stepno eq @{variables('numStepNo')} and  _ntt_tp_publications_value eq @{variables('strPubId')} and ntt_role eq 876460005"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Apply_to_each_5": {
+              "foreach": "@outputs('List_rows_RFP')?['body/value']",
+              "actions": {
+                "Update_RFP": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "3b40ad98-a1e7-4309-9a00-471e08cecc87"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps_1",
+                      "operationId": "UpdateRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "entityName": "ntt_tp_pub_stepreviews",
+                      "recordId": "@items('Apply_to_each_5')?['ntt_tp_pub_stepreviewid']",
+                      "item/ntt_isactive": true
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "runAfter": {
+                "List_rows_RFP": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "c20085ae-715a-40e5-abc5-ab1f168a7a17"
+              },
+              "type": "Foreach"
+            }
+          },
+          "runAfter": {
+            "Apply_Delegate": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@variables('numStepNo')",
+                  2
+                ]
+              },
+              {
+                "equals": [
+                  "@triggerOutputs()?['body/ntt_role']",
+                  876460004
+                ]
+              }
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "155d65e8-a6e8-41f3-8fd3-88e2d51a145a"
+          },
+          "type": "If"
+        },
+        "List_StepRev_Delegate": {
+          "runAfter": {
+            "numStepNo": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "61001e74-bb57-4a35-8a2d-8799c98bc607"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps_1",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_pub_stepreviews",
+              "$filter": "(ntt_stepno eq @{variables('numStepNo')} and  _ntt_tp_publications_value eq @{variables('strPubId')} and ntt_role eq @{triggerOutputs()?['body/ntt_role']})"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Apply_Delegate": {
+          "foreach": "@outputs('List_StepRev_Delegate')?['body/value']",
+          "actions": {
+            "Update_a_row_11": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "64d6127e-d3ce-47da-8d19-913dfe543a1c"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps_1",
+                  "operationId": "UpdateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_pub_stepreviews",
+                  "recordId": "@items('Apply_Delegate')?['ntt_tp_pub_stepreviewid']",
+                  "item/ntt_isactive": false
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {
+            "List_StepRev_Delegate": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "c2fcbb6c-f784-44b9-b953-2e500e3939be"
+          },
+          "type": "Foreach"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

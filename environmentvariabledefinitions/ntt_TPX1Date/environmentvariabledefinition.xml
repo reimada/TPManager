@@ -1,0 +1,11 @@
+<environmentvariabledefinition schemaname="ntt_TPX1Date">
+  <defaultvalue>-15</defaultvalue>
+  <displayname default="TPX1Date">
+    <label description="TPX1Date" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.12</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000001</type>
+</environmentvariabledefinition>

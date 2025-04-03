@@ -1,0 +1,6 @@
+ntt_publicationdescid: =ntt_tp_Publications.ntt_id
+ntt_publicationstring: =ntt_tp_Publications.ntt_id
+ntt_tp_usermail: =ntt_tp_Users.ntt_email
+ntt_tp_username: =ntt_tp_Users.ntt_displayname
+ntt_userdelegatingmail: =ntt_UserBehalfOf.ntt_email
+ntt_userstring: =ntt_tp_Users.ntt_id

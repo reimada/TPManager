@@ -1,0 +1,504 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {
+            "operationMetadataId": "d5a30c0d-dca1-446c-b115-8ac7ef672678"
+          },
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "token": {
+                  "type": "string"
+                }
+              }
+            },
+            "method": "POST",
+            "triggerAuthenticationType": "All"
+          }
+        }
+      },
+      "actions": {
+        "Initialize_variable_token": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "d6947986-97cb-4a27-bb91-83e4f87356e6"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "token",
+                "type": "string",
+                "value": "@triggerBody()?['token']"
+              }
+            ]
+          }
+        },
+        "Initialize_variable_response": {
+          "runAfter": {
+            "Initialize_variable_token": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "84822a86-ab07-48de-af3b-5330d4ab2122"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "Response",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Inizializza_variabile_UTC_Now": {
+          "runAfter": {
+            "Initialize_variable_response": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "e31c592b-a95a-4c6c-912d-eb194744ddc5"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "UTC_Now",
+                "type": "string",
+                "value": "@{addHours(formatDateTime(utcNow(),'f'),2)}"
+              }
+            ]
+          }
+        },
+        "Condizione_empty_token": {
+          "actions": {
+            "Compose_decodeJWT": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "2bd21fa3-3f38-4e68-96d9-d4ebcd887235"
+              },
+              "type": "Compose",
+              "inputs": "@json(if(\r\n equals(mod(length(split(variables('token'),'.')[1]),4),0),\r\n decodeBase64(split(variables('token'),'.')[1]),\r\n decodeBase64(concat(split(variables('token'),'.')[1],take('===',sub(4,mod(length(split(variables('token'),'.')[1]),4)))))\r\n))"
+            },
+            "Parse_JSON": {
+              "runAfter": {
+                "Compose_decodeJWT": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "89515f08-b5d5-4b1b-b62e-9f7d584014c6"
+              },
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@outputs('Compose_decodeJWT')",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "aud": {
+                      "type": "string"
+                    },
+                    "iss": {
+                      "type": "string"
+                    },
+                    "iat": {
+                      "type": "integer"
+                    },
+                    "nbf": {
+                      "type": "integer"
+                    },
+                    "exp": {
+                      "type": "integer"
+                    },
+                    "acct": {
+                      "type": "integer"
+                    },
+                    "acr": {
+                      "type": "string"
+                    },
+                    "acrs": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "aio": {
+                      "type": "string"
+                    },
+                    "amr": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "app_displayname": {
+                      "type": "string"
+                    },
+                    "appid": {
+                      "type": "string"
+                    },
+                    "appidacr": {
+                      "type": "string"
+                    },
+                    "family_name": {
+                      "type": "string"
+                    },
+                    "given_name": {
+                      "type": "string"
+                    },
+                    "idtyp": {
+                      "type": "string"
+                    },
+                    "ipaddr": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "oid": {
+                      "type": "string"
+                    },
+                    "onprem_sid": {
+                      "type": "string"
+                    },
+                    "platf": {
+                      "type": "string"
+                    },
+                    "puid": {
+                      "type": "string"
+                    },
+                    "rh": {
+                      "type": "string"
+                    },
+                    "scp": {
+                      "type": "string"
+                    },
+                    "signin_state": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "sub": {
+                      "type": "string"
+                    },
+                    "tenant_region_scope": {
+                      "type": "string"
+                    },
+                    "tid": {
+                      "type": "string"
+                    },
+                    "unique_name": {
+                      "type": "string"
+                    },
+                    "upn": {
+                      "type": "string"
+                    },
+                    "uti": {
+                      "type": "string"
+                    },
+                    "ver": {
+                      "type": "string"
+                    },
+                    "wids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "xms_cc": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "xms_ssm": {
+                      "type": "string"
+                    },
+                    "xms_st": {
+                      "type": "object",
+                      "properties": {
+                        "sub": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "xms_tcdt": {
+                      "type": "integer"
+                    },
+                    "xms_tdbr": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "Compose_upn_toLower": {
+              "runAfter": {
+                "Parse_JSON": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "7cde9c2f-d4cf-40a8-a46e-cf25822de59c"
+              },
+              "type": "Compose",
+              "inputs": "@toLower(body('Parse_JSON')?['upn'])"
+            },
+            "Compose_exp_time": {
+              "runAfter": {
+                "Compose_upn_toLower": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "460c7f99-6315-4f18-82a9-ea501d3ffa40"
+              },
+              "type": "Compose",
+              "inputs": "@addHours(addSeconds(formatDateTime('01-01-1970','MM-dd-yyyy'),body('Parse_JSON')?['exp']),3)"
+            },
+            "List_rows_Test_User_Table": {
+              "runAfter": {
+                "Compose_exp_time": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "6f3b93b1-74f3-4fc1-990c-0ad43d52a672"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_userses",
+                  "$filter": "ntt_email eq '@{outputs('Compose_upn_toLower')}'",
+                  "$top": 1
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Condition_item_exist": {
+              "actions": {
+                "Condition_token_expiration": {
+                  "actions": {
+                    "Set_variable_response_200": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "af3bd86d-0455-4dd8-a69b-4582d202e9ee"
+                      },
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "Response",
+                        "value": "@{length(outputs('List_rows_Test_User_Table')?['body/value'])}"
+                      }
+                    },
+                    "Response_200": {
+                      "runAfter": {
+                        "Set_variable_response_200": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "76144461-5935-48d9-bdb2-7031b7b7fb9b"
+                      },
+                      "type": "Response",
+                      "kind": "Http",
+                      "inputs": {
+                        "statusCode": 200,
+                        "body": {
+                          "status": "200"
+                        }
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "else": {
+                    "actions": {
+                      "Set_variable_response_403": {
+                        "runAfter": {},
+                        "metadata": {
+                          "operationMetadataId": "5b89448c-81be-4e60-b2c7-aa0283c12389"
+                        },
+                        "type": "SetVariable",
+                        "inputs": {
+                          "name": "Response",
+                          "value": "@{length(outputs('List_rows_Test_User_Table')?['body/value'])}"
+                        }
+                      },
+                      "Risposta_403": {
+                        "runAfter": {
+                          "Set_variable_response_403": [
+                            "Succeeded"
+                          ]
+                        },
+                        "metadata": {
+                          "operationMetadataId": "cbb25e16-7165-4603-8852-6dbdd06354d5"
+                        },
+                        "type": "Response",
+                        "kind": "Http",
+                        "inputs": {
+                          "statusCode": 403,
+                          "body": {
+                            "status": "403"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "expression": {
+                    "greater": [
+                      "@ticks(outputs('Compose_exp_time'))",
+                      "@ticks(variables('UTC_Now'))"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "1c10c58a-5693-4bb5-9ca4-dd6ebae3b0dc"
+                  },
+                  "type": "If"
+                }
+              },
+              "runAfter": {
+                "List_rows_Test_User_Table": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Set_variable_response_401": {
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "3826f9e7-ab05-4583-9419-6570481c705b"
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "Response",
+                      "value": "@{length(outputs('List_rows_Test_User_Table')?['body/value'])}"
+                    }
+                  },
+                  "Response_401": {
+                    "runAfter": {
+                      "Set_variable_response_401": [
+                        "Succeeded"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "fa78f40a-7e4e-425a-985f-d07d1c63235a"
+                    },
+                    "type": "Response",
+                    "kind": "Http",
+                    "inputs": {
+                      "statusCode": 401,
+                      "body": {
+                        "status": "401"
+                      }
+                    }
+                  }
+                }
+              },
+              "expression": {
+                "greater": [
+                  "@length(outputs('List_rows_Test_User_Table')?['body/value'])",
+                  0
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "d23c02ff-42a2-4009-920b-61e775f3f1ce"
+              },
+              "type": "If"
+            },
+            "Risposta": {
+              "runAfter": {
+                "Compose_decodeJWT": [
+                  "Failed"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "ea411877-f482-4d8d-9ee9-e24939b57575"
+              },
+              "type": "Response",
+              "kind": "Http",
+              "inputs": {
+                "statusCode": 401,
+                "body": {
+                  "status": "401"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Inizializza_variabile_UTC_Now": [
+              "Succeeded"
+            ]
+          },
+          "else": {
+            "actions": {
+              "Response_401_2": {
+                "runAfter": {},
+                "metadata": {
+                  "operationMetadataId": "4fe7391b-1a78-408c-9370-a021a4315fc6"
+                },
+                "type": "Response",
+                "kind": "Http",
+                "inputs": {
+                  "statusCode": 401,
+                  "body": {
+                    "status": "401"
+                  }
+                }
+              }
+            }
+          },
+          "expression": {
+            "not": {
+              "equals": [
+                "@variables('token')",
+                ""
+              ]
+            }
+          },
+          "metadata": {
+            "operationMetadataId": "d3fe9a18-e959-4d34-9057-a543d875eb53"
+          },
+          "type": "If"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

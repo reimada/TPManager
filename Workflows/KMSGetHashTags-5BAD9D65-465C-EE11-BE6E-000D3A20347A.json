@@ -1,0 +1,641 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "KMSUrlBase (ntt_KMSUrlBase)": {
+          "defaultValue": "https://lab-kms.eni.com/in/kms/lab/portal/api/techpub",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_KMSUrlBase"
+          }
+        },
+        "KMSToken (ntt_KMSToken)": {
+          "defaultValue": "821b33f0-a74d-45d3-bc21-eb47d842f552",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_KMSToken"
+          }
+        }
+      },
+      "triggers": {
+        "Recurrence": {
+          "recurrence": {
+            "frequency": "Day",
+            "interval": 1,
+            "startTime": "2023-09-25T08:00:00Z",
+            "schedule": {
+              "hours": [
+                "4"
+              ],
+              "minutes": [
+                0
+              ]
+            }
+          },
+          "metadata": {
+            "operationMetadataId": "57c4b675-5124-4f58-9fbd-04fadca3dae6"
+          },
+          "type": "Recurrence"
+        }
+      },
+      "actions": {
+        "Initialize_numPage": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "5deb0876-d91d-4a57-8381-117be0b77b71"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "numPage",
+                "type": "integer",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "Initialize_numSize": {
+          "runAfter": {
+            "Initialize_numPage": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "13f9d415-c140-426e-ba0e-eedbe0fd1a9e"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "numSize",
+                "type": "integer",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "Initialize_strQryUrl": {
+          "runAfter": {
+            "Initialize_numSize": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "73f1f69c-6504-4aea-8f5b-66508cda8344"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strQryUrl",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Do_until": {
+          "actions": {
+            "Increment_numPage": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "a53bae9a-4fe4-4e6e-ad2c-d728a2d67616"
+              },
+              "type": "IncrementVariable",
+              "inputs": {
+                "name": "numPage",
+                "value": 1
+              }
+            },
+            "Set_strQryUrl": {
+              "runAfter": {
+                "Compose": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "e52aa719-0794-478a-8052-682ed6d007c6"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "strQryUrl",
+                "value": "/hashtags?page=@{variables('numPage')}&size=@{variables('numSize')}&sorting=modified&sortOrder=desc"
+              }
+            },
+            "Compose": {
+              "runAfter": {
+                "Increment_numPage": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "88d94ae8-987d-44bc-8132-1a103b818967"
+              },
+              "type": "Compose",
+              "inputs": "\"Counter Value : \" @{variables('numPage')} "
+            },
+            "Compose_2": {
+              "runAfter": {
+                "Set_strQryUrl": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "89e4acca-bd56-432e-a4c5-b38629e15b9b"
+              },
+              "type": "Compose",
+              "inputs": "\"strQuery : \" @{variables('strQryUrl')} "
+            },
+            "HTTP": {
+              "runAfter": {
+                "Compose_2": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "f9d72ecc-abeb-4d72-b7cf-67033f988ed4"
+              },
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "@{parameters('KMSUrlBase (ntt_KMSUrlBase)')}@{variables('strQryUrl')}",
+                "headers": {
+                  "accept": "*/*",
+                  "x-api-key": "@parameters('KMSToken (ntt_KMSToken)')"
+                }
+              }
+            },
+            "Compose_3": {
+              "runAfter": {
+                "HTTP": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "d3cc6f79-87d6-4425-80d3-7e4b77d19b76"
+              },
+              "type": "Compose",
+              "inputs": "\"Status Code : \" @{outputs('HTTP')['statusCode']} "
+            },
+            "Condition": {
+              "actions": {
+                "Parse_JSON": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "22213daf-2e0e-4ccb-9aa3-5803dcf41ad3"
+                  },
+                  "type": "ParseJson",
+                  "inputs": {
+                    "content": "@body('HTTP')",
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "string"
+                        },
+                        "size": {
+                          "type": "string"
+                        },
+                        "sorting": {
+                          "type": "string"
+                        },
+                        "sortOrder": {
+                          "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "modified": {
+                          "type": "string"
+                        },
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "integer"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "description": {},
+                              "isDeprecated": {
+                                "type": "boolean"
+                              },
+                              "isPromoted": {
+                                "type": "boolean"
+                              },
+                              "logoUrl": {},
+                              "coverUrl": {},
+                              "owners": {},
+                              "relatedHashtags": {},
+                              "promotingNetworks": {},
+                              "private": {
+                                "type": "boolean"
+                              },
+                              "referenceYear": {},
+                              "attachments": {},
+                              "id": {
+                                "type": "string"
+                              },
+                              "transactionId": {},
+                              "created": {
+                                "type": "string"
+                              },
+                              "createdBy": {
+                                "type": "string"
+                              },
+                              "modified": {
+                                "type": "string"
+                              },
+                              "modifiedBy": {
+                                "type": "string"
+                              },
+                              "isDeleted": {
+                                "type": "boolean"
+                              },
+                              "deleted": {},
+                              "deletedBy": {},
+                              "$type": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "name",
+                              "description",
+                              "isDeprecated",
+                              "isPromoted",
+                              "logoUrl",
+                              "coverUrl",
+                              "owners",
+                              "relatedHashtags",
+                              "promotingNetworks",
+                              "private",
+                              "referenceYear",
+                              "attachments",
+                              "id",
+                              "transactionId",
+                              "created",
+                              "createdBy",
+                              "modified",
+                              "modifiedBy",
+                              "isDeleted",
+                              "deleted",
+                              "deletedBy",
+                              "$type"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "Compose_4": {
+                  "runAfter": {
+                    "Parse_JSON": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "13b7106e-ee7e-43b8-9f63-737976e8fc60"
+                  },
+                  "type": "Compose",
+                  "inputs": "@length(body('Parse_JSON')?['data'])"
+                },
+                "Condition_4": {
+                  "actions": {
+                    "Apply_to_each": {
+                      "foreach": "@body('Parse_JSON')?['data']",
+                      "actions": {
+                        "Set_variable_5": {
+                          "runAfter": {},
+                          "metadata": {
+                            "operationMetadataId": "a8eaf9cf-204b-4432-92fd-ce4998cbda34"
+                          },
+                          "type": "SetVariable",
+                          "inputs": {
+                            "name": "strModifiedDate",
+                            "value": "@{substring(items('Apply_to_each')?['modified'],0,10)}"
+                          }
+                        },
+                        "Condition_3": {
+                          "actions": {
+                            "list_tp_Tags": {
+                              "runAfter": {},
+                              "metadata": {
+                                "operationMetadataId": "a816ea8b-f792-46e5-af6b-d7302657c81d"
+                              },
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "connectionName": "shared_commondataserviceforapps",
+                                  "operationId": "ListRecords",
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                                },
+                                "parameters": {
+                                  "entityName": "ntt_tp_tagses",
+                                  "$filter": "ntt_type eq 1 and ntt_name eq '@{items('Apply_to_each')?['name']}'"
+                                },
+                                "authentication": "@parameters('$authentication')"
+                              }
+                            },
+                            "Compose_tp_Tags": {
+                              "runAfter": {
+                                "list_tp_Tags": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "metadata": {
+                                "operationMetadataId": "aa328dd9-2980-493c-ad7e-7fd10d43b4a1"
+                              },
+                              "type": "Compose",
+                              "inputs": "@length(outputs('list_tp_Tags')?['body/value'])"
+                            },
+                            "Condition_2": {
+                              "actions": {
+                                "Add_a_new_row": {
+                                  "runAfter": {},
+                                  "metadata": {
+                                    "operationMetadataId": "056e469b-2bda-48a4-9ca1-92ff64cd05fe"
+                                  },
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "connectionName": "shared_commondataserviceforapps",
+                                      "operationId": "CreateRecord",
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                                    },
+                                    "parameters": {
+                                      "entityName": "ntt_tp_tagses",
+                                      "item/ntt_isdeleted": "@items('Apply_to_each')?['isDeleted']",
+                                      "item/ntt_isdeprecated": "@items('Apply_to_each')?['isDeprecated']",
+                                      "item/ntt_kmsid": "@items('Apply_to_each')?['id']",
+                                      "item/ntt_name": "@items('Apply_to_each')?['name']",
+                                      "item/ntt_type": 1
+                                    },
+                                    "authentication": "@parameters('$authentication')"
+                                  }
+                                }
+                              },
+                              "runAfter": {
+                                "Compose_tp_Tags": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "else": {
+                                "actions": {
+                                  "Apply_to_each_2": {
+                                    "foreach": "@outputs('list_tp_Tags')?['body/value']",
+                                    "actions": {
+                                      "Update_a_row": {
+                                        "runAfter": {},
+                                        "metadata": {
+                                          "operationMetadataId": "48052ee8-0a5c-4545-a371-783b7ea90ada"
+                                        },
+                                        "type": "OpenApiConnection",
+                                        "inputs": {
+                                          "host": {
+                                            "connectionName": "shared_commondataserviceforapps",
+                                            "operationId": "UpdateRecord",
+                                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                                          },
+                                          "parameters": {
+                                            "entityName": "ntt_tp_tagses",
+                                            "recordId": "@items('Apply_to_each_2')?['ntt_tp_tagsid']",
+                                            "item/ntt_isdeleted": "@items('Apply_to_each')?['isDeleted']",
+                                            "item/ntt_isdeprecated": "@items('Apply_to_each')?['isDeprecated']",
+                                            "item/ntt_kmsid": "@items('Apply_to_each')?['id']",
+                                            "item/ntt_name": "@items('Apply_to_each')?['name']"
+                                          },
+                                          "authentication": "@parameters('$authentication')"
+                                        }
+                                      }
+                                    },
+                                    "runAfter": {},
+                                    "metadata": {
+                                      "operationMetadataId": "4d0be934-040a-4154-a281-07576cfb164a"
+                                    },
+                                    "type": "Foreach"
+                                  }
+                                }
+                              },
+                              "expression": {
+                                "equals": [
+                                  "@outputs('Compose_tp_Tags')",
+                                  0
+                                ]
+                              },
+                              "metadata": {
+                                "operationMetadataId": "5ea40c18-8708-4836-98b9-c37ee788a714"
+                              },
+                              "type": "If"
+                            }
+                          },
+                          "runAfter": {
+                            "Set_variable_5": [
+                              "Succeeded"
+                            ]
+                          },
+                          "else": {
+                            "actions": {
+                              "Set_variable_3": {
+                                "runAfter": {},
+                                "metadata": {
+                                  "operationMetadataId": "9238a8ab-e184-4655-b503-97f97493a6ef"
+                                },
+                                "type": "SetVariable",
+                                "inputs": {
+                                  "name": "bolContinueLoop",
+                                  "value": "@false"
+                                }
+                              }
+                            }
+                          },
+                          "expression": {
+                            "greaterOrEquals": [
+                              "@variables('strModifiedDate')",
+                              "@variables('strYesterday')"
+                            ]
+                          },
+                          "metadata": {
+                            "operationMetadataId": "cf7c5729-9d51-408f-8aef-cdf1bf71fdc0"
+                          },
+                          "type": "If"
+                        }
+                      },
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "c17c1831-92ad-42b5-b529-1ce6eeb91818"
+                      },
+                      "type": "Foreach"
+                    }
+                  },
+                  "runAfter": {
+                    "Compose_4": [
+                      "Succeeded"
+                    ]
+                  },
+                  "else": {
+                    "actions": {
+                      "Set_variable_2": {
+                        "runAfter": {},
+                        "metadata": {
+                          "operationMetadataId": "8287bc7f-67df-4efe-9f80-000d72e9f58e"
+                        },
+                        "type": "SetVariable",
+                        "inputs": {
+                          "name": "bolContinueLoop",
+                          "value": "@false"
+                        }
+                      }
+                    }
+                  },
+                  "expression": {
+                    "not": {
+                      "equals": [
+                        "@outputs('Compose_4')",
+                        0
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "operationMetadataId": "bedc1245-6106-4deb-acb4-10b7ff95f90a"
+                  },
+                  "type": "If"
+                }
+              },
+              "runAfter": {
+                "Compose_3": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Set_variable": {
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "b809074c-2d3b-4725-bd16-af18bed831ae"
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "bolContinueLoop",
+                      "value": false
+                    }
+                  }
+                }
+              },
+              "expression": {
+                "equals": [
+                  "@outputs('HTTP')['statusCode']",
+                  200
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "39fbb842-42da-4ed5-8062-b7f7f2a0a2cc"
+              },
+              "type": "If"
+            }
+          },
+          "runAfter": {
+            "Initialize_strModifiedDate": [
+              "Succeeded"
+            ]
+          },
+          "expression": "@equals(variables('bolContinueLoop'), false)",
+          "limit": {
+            "count": 100,
+            "timeout": "PT2H"
+          },
+          "metadata": {
+            "operationMetadataId": "640e1599-fe1d-4a97-8f17-b400408b381f"
+          },
+          "type": "Until"
+        },
+        "Initialize_bolContinueLoop": {
+          "runAfter": {
+            "Initialize_strQryUrl": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "e1bf1dba-12b5-4305-9924-0d0b209f9d70"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "bolContinueLoop",
+                "type": "boolean",
+                "value": "@true"
+              }
+            ]
+          }
+        },
+        "Initialize_strYesterday": {
+          "runAfter": {
+            "Initialize_bolContinueLoop": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "e1bf1dba-12b5-4305-9924-0d0b209f9d70"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strYesterday",
+                "type": "string",
+                "value": "@{addDays(utcNow(),-2,'yyyy-MM-dd')}"
+              }
+            ]
+          }
+        },
+        "Initialize_strModifiedDate": {
+          "runAfter": {
+            "Initialize_strYesterday": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "c02888ce-fc1e-49f1-b301-6c73584deda2"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strModifiedDate",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

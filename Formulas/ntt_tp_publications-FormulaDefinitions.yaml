@@ -1,0 +1,19 @@
+ntt_activestepno: =If(ntt_step1status=global_ntt_stepstatus.'876460002',1,If(ntt_step2status=global_ntt_stepstatus.'876460002',2,If(ntt_step3status=global_ntt_stepstatus.'876460002',3,If(ntt_step4status=global_ntt_stepstatus.'876460002',4,If(ntt_step5status=global_ntt_stepstatus.'876460002',5,0)))))
+ntt_activitydesc: =ntt_IDActivity.ntt_name
+ntt_appcategoryname: =ntt_IDAppCategory.ntt_name
+ntt_authors4kms: =Concatenate("@[",ntt_Pub_Creator.ntt_displayname,"](",ntt_Pub_Creator.ntt_kmsid,")",If(Or( ntt_Pub_Creator.ntt_id=ntt_IDMainAuthor.ntt_id,ntt_is_extauthor),"",Concatenate(",@[",ntt_IDMainAuthor.ntt_displayname,"](",ntt_IDMainAuthor.ntt_kmsid,")")))
+ntt_authorsemail: |-
+    =Concatenate(ntt_Pub_Creator.ntt_email, If(
+        Or((IsBlank(ntt_IDMainAuthor.ntt_id)),
+        (ntt_Pub_Creator.ntt_id=ntt_IDMainAuthor.ntt_id)),
+        "",
+        Concatenate(",",ntt_IDMainAuthor.ntt_email)))
+ntt_businessdesc: =ntt_IDBusiness.ntt_name
+ntt_descdeleted: =If(ntt_is_deleted,1,0)
+ntt_documenttypename: =ntt_IDDocType.ntt_name
+ntt_eventdatecalc: =ntt_IDEvent.ntt_startdate
+ntt_eventname: =ntt_IDEvent.ntt_name
+ntt_mainauthdesc: =ntt_IDMainAuthor.ntt_displayname
+ntt_pubsearching: =Concatenate(ntt_id,ntt_papertitle)
+ntt_subbusinessdesc: =ntt_IDSubBusiness.ntt_name
+ntt_workflowletter: =ntt_IDBusiness.ntt_workflow

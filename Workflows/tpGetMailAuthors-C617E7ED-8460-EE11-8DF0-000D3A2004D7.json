@@ -1,0 +1,1032 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {
+            "operationMetadataId": "50a68925-07e5-491c-82f9-f090cf82485c"
+          },
+          "type": "Request",
+          "kind": "Button",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "PubUniqueId",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Please enter your input",
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Get_a_row_by_ID": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "471a8c5a-9ab9-433b-8372-b31720d0ee22"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_publicationses",
+              "recordId": "@triggerBody()['text']"
+            },
+            "authentication": {
+              "type": "Raw",
+              "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+            }
+          }
+        },
+        "Initialize_variable": {
+          "runAfter": {
+            "Get_a_row_by_ID": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "9e6f1a2d-6ff3-465a-820b-2c1d4cdd2a06"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strListAuthors",
+                "type": "string",
+                "value": "@outputs('Get_a_row_by_ID')?['body/ntt_authorsemail']"
+              }
+            ]
+          },
+          "description": "applicant e main autor (se diversi)"
+        },
+        "Condition": {
+          "actions": {
+            "List_rows": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "cc4bb778-f714-49df-9244-165df53a6434"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_pub_coauthorenis",
+                  "$filter": "ntt_publicationdesc eq '@{outputs('Get_a_row_by_ID')?['body/ntt_id']}'"
+                },
+                "authentication": {
+                  "type": "Raw",
+                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                }
+              }
+            },
+            "Apply_to_each": {
+              "foreach": "@outputs('List_rows')?['body/value']",
+              "actions": {
+                "Append_to_string_variable": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "c8384783-2c76-471c-933a-555e7d1fd2c4"
+                  },
+                  "type": "AppendToStringVariable",
+                  "inputs": {
+                    "name": "strListAuthors",
+                    "value": "@{','}@{items('Apply_to_each')?['ntt_mailuser']}"
+                  }
+                }
+              },
+              "runAfter": {
+                "List_rows": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "77026492-e727-4c55-91ee-cc03ab754732"
+              },
+              "type": "Foreach"
+            }
+          },
+          "runAfter": {
+            "Condition_3": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "equals": [
+              "@body('Parse_JSON')?['ntt_is_notifymailcoauthoreni']",
+              "@true"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "10690eef-585f-4fad-9de3-84f900bdd111"
+          },
+          "type": "If",
+          "description": "Check CO Authors ENI"
+        },
+        "Condition_2": {
+          "actions": {
+            "Set_variable": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "74ae50b6-f5ed-4056-b84f-fb048bd33d4a"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "strExtAut",
+                "value": "@{replace(outputs('Get_a_row_by_ID')?['body/ntt_extcoauthor'],';',',')}"
+              }
+            },
+            "Append_to_string_variable_2": {
+              "runAfter": {
+                "Set_variable": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "f82286c0-de8e-4b28-b9ba-b950684d2f18"
+              },
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strListAuthors",
+                "value": "@concat(',',variables('strExtAut'))"
+              }
+            }
+          },
+          "runAfter": {
+            "Condition": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "equals": [
+              "@body('Parse_JSON')?['ntt_is_notifymailcoauthorext']",
+              "@true"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "02034790-6c38-4065-8d93-ad657ce98999"
+          },
+          "type": "If",
+          "description": "Check Ext Authors"
+        },
+        "Initialize_variable_2": {
+          "runAfter": {
+            "Initialize_variable": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "d14288b2-9e96-4aa0-8938-68499807f0c2"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strExtAut",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Respond_to_a_PowerApp_or_flow": {
+          "runAfter": {
+            "Condition_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "1e3008dc-a336-440a-b000-af5e3c92c684"
+          },
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "listauthors": "@variables('strListAuthors')"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "listauthors": {
+                  "title": "ListAuthors",
+                  "x-ms-dynamically-added": true,
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "Condition_3": {
+          "actions": {},
+          "runAfter": {
+            "Parse_JSON": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "equals": [
+              "@body('Parse_JSON')?['ntt_is_extauthor']",
+              "@true"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "be8ce0ac-2b46-4a18-a170-848e7dad2705"
+          },
+          "type": "If",
+          "description": "Ext Main Author  Rimosso dal brach Yes : \"Append\"-> strListAuthors: \"concat(',',outputs('Get_a_row_by_ID')?['body/ntt_extmainauthor'])\""
+        },
+        "Parse_JSON": {
+          "runAfter": {
+            "Initialize_variable_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "4b5ac489-2a39-4cf9-88a4-754098d51d76"
+          },
+          "type": "ParseJson",
+          "inputs": {
+            "content": "@body('Get_a_row_by_ID')",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "@@odata.context": {
+                  "type": "string"
+                },
+                "@@odata.type": {
+                  "type": "string"
+                },
+                "@@odata.id": {
+                  "type": "string"
+                },
+                "@@odata.etag": {
+                  "type": "string"
+                },
+                "@@odata.editLink": {
+                  "type": "string"
+                },
+                "ntt_is_notifymailcoauthoreni@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_notifymailcoauthoreni": {
+                  "type": "boolean"
+                },
+                "ntt_activeusers": {
+                  "type": "string"
+                },
+                "ntt_descdeleted@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_descdeleted@odata.type": {
+                  "type": "string"
+                },
+                "ntt_descdeleted": {
+                  "type": "integer"
+                },
+                "ntt_attachmentlink": {
+                  "type": "string"
+                },
+                "ntt_is_transfercopyrightreq@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_transfercopyrightreq": {
+                  "type": "boolean"
+                },
+                "modifiedon@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "modifiedon@odata.type": {
+                  "type": "string"
+                },
+                "modifiedon": {
+                  "type": "string"
+                },
+                "ntt_activitydesc": {
+                  "type": "string"
+                },
+                "ntt_eventdatecalc@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_eventdatecalc@odata.type": {
+                  "type": "string"
+                },
+                "ntt_eventdatecalc": {
+                  "type": "string"
+                },
+                "ntt_maintopicsdesc": {
+                  "type": "string"
+                },
+                "ntt_is_deleted@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_deleted": {
+                  "type": "boolean"
+                },
+                "ntt_is_fieldeventwebsite@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_fieldeventwebsite": {
+                  "type": "boolean"
+                },
+                "ntt_lastentriesvalue@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_lastentriesvalue": {
+                  "type": "integer"
+                },
+                "_owningbusinessunit_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_owningbusinessunit_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                  "type": "string"
+                },
+                "_owningbusinessunit_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_owningbusinessunit_value@odata.type": {
+                  "type": "string"
+                },
+                "_owningbusinessunit_value": {
+                  "type": "string"
+                },
+                "ntt_extcoauthor": {
+                  "type": "string"
+                },
+                "_owninguser_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_owninguser_value@odata.type": {
+                  "type": "string"
+                },
+                "_owninguser_value": {
+                  "type": "string"
+                },
+                "ntt_documenttypename": {
+                  "type": "string"
+                },
+                "_ntt_idappcategory_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_ntt_idappcategory_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                  "type": "string"
+                },
+                "_ntt_idappcategory_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_ntt_idappcategory_value@odata.type": {
+                  "type": "string"
+                },
+                "_ntt_idappcategory_value": {
+                  "type": "string"
+                },
+                "ntt_workflowstatus@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_workflowstatus": {
+                  "type": "integer"
+                },
+                "_ownerid_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_ownerid_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                  "type": "string"
+                },
+                "_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_ownerid_value@odata.type": {
+                  "type": "string"
+                },
+                "_ownerid_value": {
+                  "type": "string"
+                },
+                "ntt_step2status@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_step2status": {
+                  "type": "integer"
+                },
+                "ntt_activestepno@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_activestepno@odata.type": {
+                  "type": "string"
+                },
+                "ntt_activestepno": {
+                  "type": "integer"
+                },
+                "ntt_appcategoryname": {
+                  "type": "string"
+                },
+                "ntt_workflowletter": {
+                  "type": "string"
+                },
+                "ntt_step4status@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_step4status": {
+                  "type": "integer"
+                },
+                "ntt_mainauthdesc": {
+                  "type": "string"
+                },
+                "ntt_pubsearching": {
+                  "type": "string"
+                },
+                "_ntt_idmainauthor_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_ntt_idmainauthor_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                  "type": "string"
+                },
+                "_ntt_idmainauthor_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_ntt_idmainauthor_value@odata.type": {
+                  "type": "string"
+                },
+                "_ntt_idmainauthor_value": {
+                  "type": "string"
+                },
+                "ntt_id": {
+                  "type": "string"
+                },
+                "ntt_step5status@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_step5status": {
+                  "type": "integer"
+                },
+                "timezoneruleversionnumber@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "timezoneruleversionnumber": {
+                  "type": "integer"
+                },
+                "ntt_is_published@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_published": {
+                  "type": "boolean"
+                },
+                "_ntt_iddoctype_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_ntt_iddoctype_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                  "type": "string"
+                },
+                "_ntt_iddoctype_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_ntt_iddoctype_value@odata.type": {
+                  "type": "string"
+                },
+                "_ntt_iddoctype_value": {
+                  "type": "string"
+                },
+                "createdon@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "createdon@odata.type": {
+                  "type": "string"
+                },
+                "createdon": {
+                  "type": "string"
+                },
+                "ntt_authorsemail": {
+                  "type": "string"
+                },
+                "ntt_is_fieldpresentation@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_fieldpresentation": {
+                  "type": "boolean"
+                },
+                "ntt_is_notifymailcoauthorext@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_notifymailcoauthorext": {
+                  "type": "boolean"
+                },
+                "ntt_businessdesc": {
+                  "type": "string"
+                },
+                "versionnumber@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "versionnumber@odata.type": {
+                  "type": "string"
+                },
+                "versionnumber": {
+                  "type": "integer"
+                },
+                "ntt_eventname": {
+                  "type": "string"
+                },
+                "ntt_skipstep1@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_skipstep1": {
+                  "type": "boolean"
+                },
+                "ntt_skipstep2@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_skipstep2": {
+                  "type": "boolean"
+                },
+                "_ntt_pub_creator_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_ntt_pub_creator_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                  "type": "string"
+                },
+                "_ntt_pub_creator_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_ntt_pub_creator_value@odata.type": {
+                  "type": "string"
+                },
+                "_ntt_pub_creator_value": {
+                  "type": "string"
+                },
+                "ntt_attachmentorigfilename": {
+                  "type": "string"
+                },
+                "_ntt_tp_tmpappmanager_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_ntt_tp_tmpappmanager_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                  "type": "string"
+                },
+                "_ntt_tp_tmpappmanager_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_ntt_tp_tmpappmanager_value@odata.type": {
+                  "type": "string"
+                },
+                "_ntt_tp_tmpappmanager_value": {
+                  "type": "string"
+                },
+                "ntt_is_extauthor@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_extauthor": {
+                  "type": "boolean"
+                },
+                "_ntt_idactivity_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_ntt_idactivity_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                  "type": "string"
+                },
+                "_ntt_idactivity_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_ntt_idactivity_value@odata.type": {
+                  "type": "string"
+                },
+                "_ntt_idactivity_value": {
+                  "type": "string"
+                },
+                "ntt_is_fieldspeech@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_fieldspeech": {
+                  "type": "boolean"
+                },
+                "ntt_managerinfoapprove@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_managerinfoapprove": {
+                  "type": "integer"
+                },
+                "ntt_creationyear": {
+                  "type": "string"
+                },
+                "_modifiedby_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_modifiedby_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_modifiedby_value@odata.type": {
+                  "type": "string"
+                },
+                "_modifiedby_value": {
+                  "type": "string"
+                },
+                "ntt_description": {
+                  "type": "string"
+                },
+                "_createdby_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_createdby_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_createdby_value@odata.type": {
+                  "type": "string"
+                },
+                "_createdby_value": {
+                  "type": "string"
+                },
+                "ntt_subbusinessdesc": {
+                  "type": "string"
+                },
+                "_ntt_idbusiness_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_ntt_idbusiness_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                  "type": "string"
+                },
+                "_ntt_idbusiness_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_ntt_idbusiness_value@odata.type": {
+                  "type": "string"
+                },
+                "_ntt_idbusiness_value": {
+                  "type": "string"
+                },
+                "ntt_submissiondeadline@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_submissiondeadline@odata.type": {
+                  "type": "string"
+                },
+                "ntt_submissiondeadline": {
+                  "type": "string"
+                },
+                "_ntt_idevent_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_ntt_idevent_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                  "type": "string"
+                },
+                "_ntt_idevent_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_ntt_idevent_value@odata.type": {
+                  "type": "string"
+                },
+                "_ntt_idevent_value": {
+                  "type": "string"
+                },
+                "statuscode@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "statuscode": {
+                  "type": "integer"
+                },
+                "_ntt_idsubbusiness_value@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "_ntt_idsubbusiness_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                  "type": "string"
+                },
+                "_ntt_idsubbusiness_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                  "type": "string"
+                },
+                "_ntt_idsubbusiness_value@odata.type": {
+                  "type": "string"
+                },
+                "_ntt_idsubbusiness_value": {
+                  "type": "string"
+                },
+                "ntt_tp_publicationsid@odata.type": {
+                  "type": "string"
+                },
+                "ntt_tp_publicationsid": {
+                  "type": "string"
+                },
+                "ntt_coauthorsenidesc": {
+                  "type": "string"
+                },
+                "ntt_submissiondate@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_submissiondate@odata.type": {
+                  "type": "string"
+                },
+                "ntt_submissiondate": {
+                  "type": "string"
+                },
+                "ntt_step3status@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_step3status": {
+                  "type": "integer"
+                },
+                "statecode@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "statecode": {
+                  "type": "integer"
+                },
+                "ntt_is_fieldother@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_fieldother": {
+                  "type": "boolean"
+                },
+                "ntt_step1status@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_step1status": {
+                  "type": "integer"
+                },
+                "ntt_papertitle": {
+                  "type": "string"
+                },
+                "ntt_activeusersmail": {
+                  "type": "string"
+                },
+                "ntt_is_publishonkms@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_publishonkms": {
+                  "type": "boolean"
+                },
+                "ntt_is_fieldsnscomunication@OData.Community.Display.V1.FormattedValue": {
+                  "type": "string"
+                },
+                "ntt_is_fieldsnscomunication": {
+                  "type": "boolean"
+                },
+                "owningbusinessunit@odata.associationLink": {
+                  "type": "string"
+                },
+                "owningbusinessunit@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_IDAppCategory@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_IDAppCategory@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ownerid@odata.associationLink": {
+                  "type": "string"
+                },
+                "ownerid@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_IDMainAuthor@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_IDMainAuthor@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_IDDocType@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_IDDocType@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_Pub_Creator@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_Pub_Creator@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_TmpAppManager@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_TmpAppManager@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_IDActivity@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_IDActivity@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_IDBusiness@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_IDBusiness@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_IDEvent@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_IDEvent@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_IDSubBusiness@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_IDSubBusiness@odata.navigationLink": {
+                  "type": "string"
+                },
+                "createdby@odata.associationLink": {
+                  "type": "string"
+                },
+                "createdby@odata.navigationLink": {
+                  "type": "string"
+                },
+                "createdonbehalfby@odata.associationLink": {
+                  "type": "string"
+                },
+                "createdonbehalfby@odata.navigationLink": {
+                  "type": "string"
+                },
+                "modifiedby@odata.associationLink": {
+                  "type": "string"
+                },
+                "modifiedby@odata.navigationLink": {
+                  "type": "string"
+                },
+                "modifiedonbehalfby@odata.associationLink": {
+                  "type": "string"
+                },
+                "modifiedonbehalfby@odata.navigationLink": {
+                  "type": "string"
+                },
+                "owninguser@odata.associationLink": {
+                  "type": "string"
+                },
+                "owninguser@odata.navigationLink": {
+                  "type": "string"
+                },
+                "owningteam@odata.associationLink": {
+                  "type": "string"
+                },
+                "owningteam@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_SyncErrors@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_SyncErrors@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_DuplicateMatchingRecord@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_DuplicateMatchingRecord@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_DuplicateBaseRecord@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_DuplicateBaseRecord@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_AsyncOperations@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_AsyncOperations@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_MailboxTrackingFolders@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_MailboxTrackingFolders@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_UserEntityInstanceDatas@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_UserEntityInstanceDatas@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_ProcessSession@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_ProcessSession@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_BulkDeleteFailures@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_BulkDeleteFailures@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_PrincipalObjectAttributeAccesses@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_publications_PrincipalObjectAttributeAccesses@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_CoAuthorENI_IDPublication_ntt_@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_CoAuthorENI_IDPublication_ntt_@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_CoAuthorExt_IDPublication_ntt_@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_CoAuthorExt_IDPublication_ntt_@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_Comments_IDPublication_ntt_tp_@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_Comments_IDPublication_ntt_tp_@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_LinkedSubmissions_IDPublicatio@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_LinkedSubmissions_IDPublicatio@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_LinkedSubmissions_IDListPublic@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_LinkedSubmissions_IDListPublic@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_Tags_IDPublication_ntt_tp_Publ@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_Tags_IDPublication_ntt_tp_Publ@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_IDUserSubsidiaryFP@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_IDUserSubsidiaryFP@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_IDUserRegionFP@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_IDUserRegionFP@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_entries_ntt_tp_Publications_ntt_tp@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_entries_ntt_tp_Publications_ntt_tp@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_MainTopic_ntt_tp_Publications_@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_MainTopic_ntt_tp_Publications_@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_Criteria_ntt_tp_Publications_n@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_Criteria_ntt_tp_Publications_n@odata.navigationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_StepReview_ntt_tp_Publications@odata.associationLink": {
+                  "type": "string"
+                },
+                "ntt_tp_Pub_StepReview_ntt_tp_Publications@odata.navigationLink": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

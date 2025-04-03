@@ -1,0 +1,174 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "192fbe31-0300-471f-8dd0-8fa81aeefe44"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "ntt_tp_pub_linkedsubmissions",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/runas": 1
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Condition_2": {
+          "actions": {
+            "get_SourcePub": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "6db996a9-dc4b-4eb3-8bff-b249ee69bc62"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_publicationses",
+                  "recordId": "@triggerOutputs()?['body/_ntt_idpublication_value']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "get_LinkedPub": {
+              "runAfter": {
+                "get_SourcePub": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "f665f4cc-bab1-4801-b081-cf269603b1f7"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_publicationses",
+                  "recordId": "@triggerOutputs()?['body/_ntt_idlistpublications_value']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Condition": {
+              "actions": {
+                "Add_a_new_row": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "9b5d04c7-edd6-48d3-a5fc-aedaa45178ef"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "CreateRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "entityName": "ntt_tp_pub_linkedsubmissionses",
+                      "item/ntt_autorow": 1,
+                      "item/ntt_IDListPublications@odata.bind": "@outputs('get_SourcePub')?['body/@odata.id']",
+                      "item/ntt_IDPublication@odata.bind": "@outputs('get_LinkedPub')?['body/@odata.id']"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "runAfter": {
+                "get_LinkedPub": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "or": [
+                  {
+                    "equals": [
+                      "@outputs('get_SourcePub')?['body/_ntt_pub_creator_value']",
+                      "@outputs('get_LinkedPub')?['body/_ntt_pub_creator_value']"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@outputs('get_LinkedPub')?['body/_ntt_pub_creator_value']",
+                      "@outputs('get_LinkedPub')?['body/_ntt_idmainauthor_value']"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@outputs('get_LinkedPub')?['body/_ntt_idmainauthor_value']",
+                      "@outputs('get_LinkedPub')?['body/_ntt_pub_creator_value']"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@outputs('get_LinkedPub')?['body/_ntt_idmainauthor_value']",
+                      "@outputs('get_LinkedPub')?['body/_ntt_idmainauthor_value']"
+                    ]
+                  }
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "0f230d16-b21d-424d-8305-c00de0e6dfc6"
+              },
+              "type": "If"
+            }
+          },
+          "runAfter": {},
+          "expression": {
+            "equals": [
+              "@triggerOutputs()?['body/ntt_autorow']",
+              0
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "1b66e902-e152-424e-86bd-48a83e993f13"
+          },
+          "type": "If"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

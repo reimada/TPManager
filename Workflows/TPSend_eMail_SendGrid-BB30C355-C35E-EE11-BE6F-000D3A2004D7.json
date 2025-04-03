@@ -1,0 +1,416 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {
+            "operationMetadataId": "a086dcff-fa83-419d-b437-1183ba35da69"
+          },
+          "type": "Request",
+          "kind": "Button",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "To",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Please enter your input",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "text_1": {
+                  "title": "CC",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Please enter your input",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "text_2": {
+                  "title": "Sender",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Please enter your input",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "text_3": {
+                  "title": "Subject",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Please enter your input",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "text_4": {
+                  "title": "ContentMail",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Please enter your input",
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text",
+                "text_1",
+                "text_2",
+                "text_3",
+                "text_4"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "HTTP": {
+          "runAfter": {
+            "Initialize_variable": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "7c92c4f5-03fc-46c0-aa9c-abd9a45c3a04"
+          },
+          "type": "Http",
+          "inputs": {
+            "method": "POST",
+            "uri": "https://api.sendgrid.com/v3/mail/send",
+            "headers": {
+              "Authorization": "Bearer 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",
+              "Content-Type": "application/json",
+              "X-Priority": "1",
+              "X-MSMail-Priority": "High",
+              "Importance": "High"
+            },
+            "body": {
+              "personalizations": [
+                "@variables('objListToCc')"
+              ],
+              "from": {
+                "email": "@{triggerBody()['text_2']}"
+              },
+              "subject": "@{triggerBody()['text_3']}",
+              "content": [
+                {
+                  "type": "text/html",
+                  "value": "@{triggerBody()['text_4']}"
+                }
+              ]
+            }
+          }
+        },
+        "Respond_to_a_PowerApp_or_flow": {
+          "runAfter": {
+            "HTTP": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "9d05e6d1-5182-458a-81be-64216ac155f0"
+          },
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "response": 200
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "response": {
+                  "title": "response",
+                  "x-ms-dynamically-added": true,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "Initialize_strListTo": {
+          "runAfter": {
+            "Apply_to_each": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "120f52f6-8a21-47bc-8b07-a44b723e82b6"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strListTo",
+                "type": "string",
+                "value": "@{concat('{\"to\": [{\"email\": \"',replace(variables('ToDistinct'),',','\"},{\"email\": \"'),'\"}],')}"
+              }
+            ]
+          }
+        },
+        "Initialize_strListCC": {
+          "runAfter": {
+            "Initialize_strListTo": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "d239c71b-73f8-4489-a82e-fdd415490b29"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strListCC",
+                "type": "string",
+                "value": "@{concat('\"cc\": [{\"email\": \"',replace(variables('strCCCleaned'),',','\"},{\"email\": \"'),'\"}]}')}"
+              }
+            ]
+          }
+        },
+        "Initialize_objListToCc": {
+          "runAfter": {
+            "Initialize_strListCC": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "36d68803-be35-4836-8ad4-feb8cfab2399"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "objListToCc",
+                "type": "object",
+                "value": "@json(concat(variables('strListTo'),variables('strListCC')))"
+              }
+            ]
+          }
+        },
+        "Initialize_variable": {
+          "runAfter": {
+            "Initialize_objListToCc": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "126055d8-a1aa-466d-9a5c-350e72f7e320"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "tempContent",
+                "type": "string",
+                "value": "<body style=\"margin: 10; padding: 10;\">\n<table style=\"height: 60px;text-align: center;font-size:20px; width: 800px;border-collapse: collapse;border: 1px solid #446298;\"order=\"1\">\n<tbody>\n<tr>\n<td style=\"background-color: #517AC4;color:white;\" >Eni Technical Publications</td>\n</tr>\n</tbody>\n</table>\n<table style=\"background-color: #517AC4;color:white;border-collapse: collapse;border: 1px solid #446298;; width: 800px; height: 60px;text-align: center;font-size:18px;\"order=\"1\">\n<tbody>\n<tr>\n<td style=\"width: 50%;border: 1px solid #446298;\"><div>Publication:</div><div>ID \"pub_id\"</div><div>Submission deadline: \"dd/MM/yyyy\"</div></td>\n<td style=\"width: 50%;border: 1px solid #446298;\"><div>Event:</div><div>Name: \"event_name\" Date: \"event_date\"</div><div>Location: \"event_location\"</div></td>\n</tr>\n</tbody>\n</table>\n<table style=\"background-color: #517AC4;color:white;border-collapse: collapse;border: 1px solid #446298; width: 800px; height: 40px;text-align: center;font-size:14px;\"order=\"1\">\n<tbody>\n<tr>\n<td >Your action is required as \"reviewer_role\"</td>\n</tr>\n</tbody>\n</table>\n<table style=\"background-color: #E3E3E3;color:#517AC4;border-collapse: collapse;border: 1px solid #446298; width: 800px; height: 40px;text-align: center;font-size:16px;\"order=\"1\">\n<tbody>\n<tr>\n<td ><a href=\"https://www.gazzetta.it\">Access TP Manager for publication detail</a></td>\n</tr>\n</tbody>\n</table>\n<table style=\"background-color: #517AC4;color:white;border-collapse: collapse;border: 1px solid #446298; width: 800px; height: 40px;text-align: center;font-size:14px;\"order=\"1\">\n<tbody>\n<tr>\n<td >Publication History and comments</td>\n</tr>\n</tbody>\n</table>\n<table style=\"background-color: #E3E3E3;color:black;border-collapse: collapse;border: 1px solid #446298; width: 800px; height: 40px;text-align: center;font-size:16px;\"order=\"1\">\n<tbody>\n<tr>\n<td ><i>This is an automated mail, kindly do not reply</i></td>\n</tr>\n</tbody>\n</table>\n</body>\n"
+              }
+            ]
+          }
+        },
+        "Inizializzazione_strAllMail": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "9ac3cb97-2f3a-4d76-8329-22d95c7ba294"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strAllMail",
+                "type": "string",
+                "value": "@triggerBody()['text']"
+              }
+            ]
+          }
+        },
+        "Apply_to_each": {
+          "foreach": "@split(replace(triggerBody()['text_1'], ' ', ''), ',')",
+          "actions": {
+            "Condition": {
+              "actions": {},
+              "runAfter": {},
+              "else": {
+                "actions": {
+                  "Condition_2": {
+                    "actions": {
+                      "Append_to_string_variable": {
+                        "runAfter": {},
+                        "metadata": {
+                          "operationMetadataId": "0cfd3d41-a303-4414-9a1a-02a3023de495"
+                        },
+                        "type": "AppendToStringVariable",
+                        "inputs": {
+                          "name": "strCCCleaned",
+                          "value": ","
+                        }
+                      }
+                    },
+                    "runAfter": {},
+                    "expression": {
+                      "not": {
+                        "equals": [
+                          "@variables('strCCCleaned')",
+                          ""
+                        ]
+                      }
+                    },
+                    "metadata": {
+                      "operationMetadataId": "49b8008b-555d-4a4c-b9b0-8d0657ac9cd0"
+                    },
+                    "type": "If"
+                  },
+                  "Append_to_string_variable_2": {
+                    "runAfter": {
+                      "Condition_2": [
+                        "Succeeded"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "68341964-452f-464d-827e-3fa5e2291daa"
+                    },
+                    "type": "AppendToStringVariable",
+                    "inputs": {
+                      "name": "strAllMail",
+                      "value": "@items('Apply_to_each')"
+                    }
+                  },
+                  "Append_to_string_variable_3": {
+                    "runAfter": {
+                      "Append_to_string_variable_2": [
+                        "Succeeded"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "33f507e7-6057-41b6-8911-fc4ab9ded03b"
+                    },
+                    "type": "AppendToStringVariable",
+                    "inputs": {
+                      "name": "strCCCleaned",
+                      "value": "@items('Apply_to_each')"
+                    }
+                  }
+                }
+              },
+              "expression": {
+                "contains": [
+                  "@variables('strAllMail')",
+                  "@items('Apply_to_each')"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "787fdb34-232d-44f0-b4f5-b4e1ce99fed6"
+              },
+              "type": "If"
+            }
+          },
+          "runAfter": {
+            "Inizializzazione_ToDistinct": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "fe5f3321-65ea-495a-b383-25240d61fca4"
+          },
+          "type": "Foreach"
+        },
+        "Inizializzazione_strCCCleaned": {
+          "runAfter": {
+            "Inizializzazione_strAllMail": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "069efb74-1811-48ed-bde4-d6e549ffaab1"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strCCCleaned",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Inizializzazione_ToDistinct": {
+          "runAfter": {
+            "Popolamento_ToArray": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "767f17a6-3f92-4adb-afa9-29a9c732dfe5"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "ToDistinct",
+                "type": "string",
+                "value": "@{join(variables('ToArray'), ',')}"
+              }
+            ]
+          }
+        },
+        "Inizializzazione_ToArray": {
+          "runAfter": {
+            "Inizializzazione_strCCCleaned": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "21082e91-a5c5-4748-b0bf-b965c7c3e32a"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "ToArray",
+                "type": "array"
+              }
+            ]
+          }
+        },
+        "Popolamento_ToArray": {
+          "runAfter": {
+            "Pulizia_Spazi_strAllMail": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "8fdc3d3d-9f4b-43d0-a55f-493c3f948447"
+          },
+          "type": "SetVariable",
+          "inputs": {
+            "name": "ToArray",
+            "value": "@union(split(variables('strAllMail'), ','), split(variables('strAllMail'), ','))"
+          }
+        },
+        "Pulizia_Spazi_strAllMail": {
+          "runAfter": {
+            "Inizializzazione_ToArray": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "d488a1c1-5642-449b-ad86-ad3e75b61f6f"
+          },
+          "type": "SetVariable",
+          "inputs": {
+            "name": "strAllMail",
+            "value": "@{replace(replace(triggerBody()['text'], ' ', ''), '\\n','')}"
+          }
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

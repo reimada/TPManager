@@ -1,0 +1,389 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline_1": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "ntt_sharedsharepointonline_d7892"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "TPSharepointSite (ntt_TPSharepointSite)": {
+          "defaultValue": "https://enispa.sharepoint.com/sites/TP-Dev",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_TPSharepointSite"
+          }
+        },
+        "TPSharepointDocLibrary (ntt_TPSharepointDocLibrary)": {
+          "defaultValue": "84FB1E1D-1B1F-4DDF-AEB1-93EAB5E86E2A",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_TPSharepointDocLibrary"
+          }
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {
+            "operationMetadataId": "c96d48a1-9ac9-41a3-a7b8-2d17e0b052e1"
+          },
+          "type": "Request",
+          "kind": "PowerAppV2",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "file": {
+                  "title": "File Content",
+                  "type": "object",
+                  "x-ms-dynamically-added": true,
+                  "description": "Please select file or image",
+                  "x-ms-content-hint": "FILE",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "contentBytes": {
+                      "type": "string",
+                      "format": "byte"
+                    }
+                  }
+                }
+              },
+              "required": []
+            }
+          }
+        }
+      },
+      "actions": {
+        "Initialize_variable": {
+          "runAfter": {
+            "Componi": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "26ad2b16-e95f-41d9-ab5d-55aafab69082"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "arrParFile",
+                "type": "array",
+                "value": "@split(triggerBody()?['file']?['name'],'%')"
+              }
+            ]
+          }
+        },
+        "Condition": {
+          "actions": {},
+          "runAfter": {
+            "Initialize_variable_4": [
+              "Succeeded"
+            ]
+          },
+          "else": {
+            "actions": {
+              "Set_variable": {
+                "runAfter": {},
+                "metadata": {
+                  "operationMetadataId": "38f85b22-984d-4216-be10-0ea85dfc4764"
+                },
+                "type": "SetVariable",
+                "inputs": {
+                  "name": "strPath",
+                  "value": "@{variables('arrParFile')[0]}/@{variables('arrParFile')[2]}"
+                }
+              }
+            }
+          },
+          "expression": {
+            "equals": [
+              "@variables('arrParFile')[2]",
+              ""
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "31d95747-3e88-46b2-9d14-fecfabbe7107"
+          },
+          "type": "If"
+        },
+        "Initialize_variable_2": {
+          "runAfter": {
+            "Initialize_variable": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "7d2b9673-df8a-4feb-a6b8-566de2d60fca"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strPath",
+                "type": "string",
+                "value": "@{variables('arrParFile')[0]}"
+              }
+            ]
+          }
+        },
+        "Try": {
+          "actions": {
+            "Create_new_folder": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "b7ca8a6b-cc06-499b-a382-14d73b382503"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline_1",
+                  "operationId": "CreateNewFolder",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('TPSharepointSite (ntt_TPSharepointSite)')",
+                  "table": "@parameters('TPSharepointDocLibrary (ntt_TPSharepointDocLibrary)')",
+                  "parameters/path": "@variables('strPath')"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Create_file": {
+              "runAfter": {
+                "Create_new_folder": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "6a6076a2-0ddf-4c19-868c-6a8d160fadab"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline_1",
+                  "operationId": "CreateFile",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('TPSharepointSite (ntt_TPSharepointSite)')",
+                  "folderPath": "@outputs('Create_new_folder')?['body/{FullPath}']",
+                  "name": "@{formatDateTime(utcNow(),'yyyyMMddhhmmss')}_@{variables('arrParFile')[1]}",
+                  "body": "@triggerBody()['file']['contentBytes']"
+                },
+                "authentication": "@parameters('$authentication')"
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "Update_file_properties": {
+              "runAfter": {
+                "Create_file": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "e52d13f3-1302-4268-b0e2-591ae1d7c156"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline_1",
+                  "operationId": "PatchFileItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('TPSharepointSite (ntt_TPSharepointSite)')",
+                  "table": "@parameters('TPSharepointDocLibrary (ntt_TPSharepointDocLibrary)')",
+                  "id": "@outputs('Create_file')?['body/ItemId']",
+                  "item/TPFilename": "@{variables('arrParFile')[0]}_@{variables('arrParFile')[1]}"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {
+            "Componi_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "9d0d98f8-6e3a-4f22-bbc0-f8c589e2bb8b"
+          },
+          "type": "Scope"
+        },
+        "Catch_Error": {
+          "actions": {
+            "Set_variable_2": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "2753e64f-cb3a-4028-a59c-af73cc1f2f61"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "errCode",
+                "value": "1"
+              }
+            }
+          },
+          "runAfter": {
+            "Try": [
+              "Failed",
+              "TimedOut"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "a0e18636-e80b-4d03-83b8-2bcd0e304013"
+          },
+          "type": "Scope"
+        },
+        "Initialize_variable_3": {
+          "runAfter": {
+            "Initialize_variable_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "0565c957-174b-4de2-a431-fc697a4a0c31"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "errCode",
+                "type": "string",
+                "value": "0"
+              }
+            ]
+          }
+        },
+        "Catch_Success": {
+          "actions": {
+            "Set_variable_3": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "568b9698-9ae2-4ad4-a97a-5434e485ed5f"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "retPath",
+                "value": "@{parameters('TPSharepointSite (ntt_TPSharepointSite)')}/@{outputs('Update_file_properties')?['body/{FullPath}']}"
+              }
+            }
+          },
+          "runAfter": {
+            "Try": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "c19e3cf4-ef82-4a7c-b058-3c047d2577f3"
+          },
+          "type": "Scope"
+        },
+        "Respond_to_a_PowerApp_or_flow_2": {
+          "runAfter": {
+            "Catch_Error": [
+              "Succeeded",
+              "Failed",
+              "Skipped",
+              "TimedOut"
+            ],
+            "Catch_Success": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "54fc7dbf-bc9f-4df6-8aaf-95fa506495c2"
+          },
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "pathfile": "@variables('retPath')",
+              "errcode": "@variables('errCode')"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "pathfile": {
+                  "title": "PathFile",
+                  "x-ms-dynamically-added": true,
+                  "type": "string"
+                },
+                "errcode": {
+                  "title": "ErrCode",
+                  "x-ms-dynamically-added": true,
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "Initialize_variable_4": {
+          "runAfter": {
+            "Initialize_variable_3": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "8090f3a9-5730-438e-829d-24038b208cf9"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "retPath",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Componi": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "bcad802b-d47b-4a7d-8e19-2a4cb9ff4dc6"
+          },
+          "type": "Compose",
+          "inputs": "@parameters('TPSharepointSite (ntt_TPSharepointSite)')"
+        },
+        "Componi_2": {
+          "runAfter": {
+            "Condition": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f0ce1eaa-2aeb-4f7e-af80-022ebc7c019a"
+          },
+          "type": "Compose",
+          "inputs": "@variables('strPath')"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -1,0 +1,292 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "25b7a551-01bf-4b08-93d1-a1119ecfc691"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 4,
+              "subscriptionRequest/entityname": "ntt_tp_pub_stepreview",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "ntt_isactive",
+              "subscriptionRequest/filterexpression": "ntt_isactive eq true and ntt_isdelegating eq false and ntt_isdelegated eq false",
+              "subscriptionRequest/runas": 3
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Compose": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "9e18b391-5a1c-4d55-aed3-c76405622717"
+          },
+          "type": "Compose",
+          "inputs": "@triggerOutputs()?['body']"
+        },
+        "List_rows": {
+          "runAfter": {
+            "Initialize_variable": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "0717ee7b-8020-48df-93f7-7728578ac736"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_delegationmgmts",
+              "$filter": "_ntt_tp_usersdelegating_value eq @{triggerOutputs()?['body/_ntt_tp_users_value']}"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Apply_to_each": {
+          "foreach": "@outputs('List_rows')?['body/value']",
+          "actions": {
+            "Add_a_new_row_-_tp_Pub_StepReviews": {
+              "runAfter": {
+                "Add_a_new_row_-_tp_Entries": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "2c56936a-1f9c-432e-b4ab-a5980602d111"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_pub_stepreviews",
+                  "item/ntt_id": "@variables('emptyID')",
+                  "item/ntt_delegationdatefrom": "@formatDateTime(utcNow(),'MM-dd-yyyy')",
+                  "item/ntt_delegationdateto": "@formatDateTime(addDays(utcNow(),730),'MM-dd-yyyy')",
+                  "item/ntt_isactive": true,
+                  "item/ntt_isdelegated": true,
+                  "item/ntt_isdelegating": false,
+                  "item/ntt_onbehalf": "@items('Apply_to_each')?['ntt_isonbehalf']",
+                  "item/ntt_RelatedToOtherReview@odata.bind": "/ntt_tp_pub_stepreviews(@{triggerOutputs()?['body/ntt_tp_pub_stepreviewid']})",
+                  "item/ntt_role": "@triggerOutputs()?['body/ntt_role']",
+                  "item/ntt_stepno": "@triggerOutputs()?['body/ntt_stepno']",
+                  "item/ntt_tp_Publications@odata.bind": "/@{triggerOutputs()?['body/_ntt_tp_publications_type']}(@{triggerOutputs()?['body/_ntt_tp_publications_value']})",
+                  "item/ntt_tp_Users@odata.bind": "/ntt_tp_userses(@{items('Apply_to_each')?['_ntt_tp_usersdelegate_value']})",
+                  "item/ntt_UserBehalfOf@odata.bind": "/ntt_tp_userses(@{items('Apply_to_each')?['_ntt_tp_usersdelegating_value']})"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Condition": {
+              "actions": {
+                "Compose_2": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "ede2edf9-a7f4-4528-b547-51693fd54f59"
+                  },
+                  "type": "Compose",
+                  "inputs": "@concat('<p>',items('Apply_to_each')?['ntt_delegatingdisplayname'],' involved the following people as delegated: <a href=\"mailto:',items('Apply_to_each')?['ntt_delegatemail'],'\">',items('Apply_to_each')?['ntt_delegatedisplayname'],'</a>',' with No time limit','. On behalf of himself/herself','</p>')"
+                },
+                "Set_variable": {
+                  "runAfter": {
+                    "Compose_2": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "45890907-7220-46b6-9ff3-c6883646c461"
+                  },
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "varEntryComment",
+                    "value": "@{outputs('Compose_2')}"
+                  }
+                }
+              },
+              "runAfter": {},
+              "else": {
+                "actions": {
+                  "Compose_3": {
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "1ee570e9-e799-400f-8829-d48d9858bbe1"
+                    },
+                    "type": "Compose",
+                    "inputs": "@concat('<p>',items('Apply_to_each')?['ntt_delegatingdisplayname'],' involved the following people as delegated: <a href=\"mailto:',items('Apply_to_each')?['ntt_delegatemail'],'\">',items('Apply_to_each')?['ntt_delegatedisplayname'],'</a>',' with No time limit','. With full delegation','</p>')"
+                  },
+                  "Set_variable_2": {
+                    "runAfter": {
+                      "Compose_3": [
+                        "Succeeded"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "3b33bdb1-7a4a-4e64-a4fb-904ebbb9ce11"
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "varEntryComment",
+                      "value": "@{outputs('Compose_3')}"
+                    }
+                  },
+                  "Update_a_row_-_DeActive_Delegate_pubStepReview": {
+                    "runAfter": {
+                      "Set_variable_2": [
+                        "Succeeded"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "1a8248c2-b0cc-449f-8099-94adc388c358"
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "shared_commondataserviceforapps",
+                        "operationId": "UpdateRecord",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                      },
+                      "parameters": {
+                        "entityName": "ntt_tp_pub_stepreviews",
+                        "recordId": "@triggerOutputs()?['body/ntt_tp_pub_stepreviewid']",
+                        "item/ntt_isactive": false
+                      },
+                      "authentication": "@parameters('$authentication')"
+                    }
+                  }
+                }
+              },
+              "expression": {
+                "equals": [
+                  "@items('Apply_to_each')?['ntt_isonbehalf']",
+                  "@true"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "ee073c29-9f3d-430a-ab27-e73556810184"
+              },
+              "type": "If"
+            },
+            "Add_a_new_row_-_tp_Entries": {
+              "runAfter": {
+                "Condition": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "54b2b883-4100-4152-b6bc-8e91543f8a0b"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_entrieses",
+                  "item/ntt_entry_type": 876460010,
+                  "item/ntt_name": "@variables('emptyID')",
+                  "item/ntt_tp_Publications@odata.bind": "/@{triggerOutputs()?['body/_ntt_tp_publications_type']}(@{triggerOutputs()?['body/_ntt_tp_publications_value']})",
+                  "item/ntt_richtcomment": "@variables('varEntryComment')",
+                  "item/ntt_roles": "@triggerOutputs()?['body/ntt_role']",
+                  "item/ntt_tp_EntryUsers@odata.bind": "/ntt_tp_userses(@{items('Apply_to_each')?['_ntt_tp_usersdelegating_value']})"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {
+            "List_rows": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "e4c1c34b-f611-4e78-9856-4d1c1a8c5078"
+          },
+          "type": "Foreach"
+        },
+        "Initialize_emptyID": {
+          "runAfter": {
+            "Compose": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "24dfad48-e0f4-46a1-bcd3-bae45ad4b5bb"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "emptyID",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Initialize_variable": {
+          "runAfter": {
+            "Initialize_emptyID": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "eff29162-d6b7-4c34-88ae-8b9913da50b7"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varEntryComment",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

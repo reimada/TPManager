@@ -1,0 +1,4 @@
+ntt_delegatedisplayname: =ntt_tp_UsersDelegate.ntt_displayname
+ntt_delegatemail: =ntt_tp_UsersDelegate.ntt_email
+ntt_delegatingdisplayname: =ntt_tp_UsersDelegating.ntt_displayname
+ntt_delegatingmail: =ntt_tp_UsersDelegating.ntt_email

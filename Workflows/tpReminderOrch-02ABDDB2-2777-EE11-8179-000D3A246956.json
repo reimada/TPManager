@@ -1,0 +1,430 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "TPX1Date (ntt_TPX1Date)": {
+          "defaultValue": -15,
+          "type": "Int",
+          "metadata": {
+            "schemaName": "ntt_TPX1Date"
+          }
+        },
+        "TPX2Date (ntt_TPX2Date)": {
+          "defaultValue": -5,
+          "type": "Int",
+          "metadata": {
+            "schemaName": "ntt_TPX2Date"
+          }
+        }
+      },
+      "triggers": {
+        "Recurrence": {
+          "recurrence": {
+            "frequency": "Day",
+            "interval": 1,
+            "timeZone": "W. Europe Standard Time",
+            "startTime": "2023-10-30T09:00:00Z",
+            "schedule": {
+              "hours": [
+                "4"
+              ]
+            }
+          },
+          "metadata": {
+            "operationMetadataId": "6f4d7509-5452-4643-b349-6aacb96be2dd"
+          },
+          "type": "Recurrence"
+        }
+      },
+      "actions": {
+        "List_rows": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "aead472a-80a8-4475-8da8-4b995e268e38"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_publicationses",
+              "$filter": "ntt_workflowstatus eq 876460001"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "a2ePub": {
+          "foreach": "@outputs('List_rows')?['body/value']",
+          "actions": {
+            "Set_Deadline": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "8ee3426b-791f-4acd-94e7-fc55a027014b"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "strDeadline",
+                "value": "@{formatDateTime(addDays(items('a2ePub')?['ntt_submissiondeadline'],1),'yyyyMMdd')}"
+              }
+            },
+            "Set_EventDate": {
+              "runAfter": {
+                "getEvent": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "b093a15a-7dd9-41af-9a04-ddabfaaf79f3"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "strEventDate",
+                "value": "@{formatDateTime(addDays(outputs('getEvent')?['body/ntt_startdate'],1),'yyyyMMdd')}"
+              }
+            },
+            "getEvent": {
+              "runAfter": {
+                "Set_Deadline": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "3f5f1212-0100-436d-aa65-f3ade7fa76e2"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_eventses",
+                  "recordId": "@items('a2ePub')?['_ntt_idevent_value']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "testEvenDate": {
+              "actions": {
+                "Update_a_row": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "bcd0ff39-db0d-4879-b84f-66bc910179dc"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "UpdateRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "entityName": "ntt_tp_publicationses",
+                      "recordId": "@items('a2ePub')?['ntt_tp_publicationsid']",
+                      "item/ntt_sendl2reminder": true
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "runAfter": {
+                "Set_variable_2": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "test_SubmissionDeadLine": {
+                    "actions": {
+                      "Update_a_row_2": {
+                        "runAfter": {},
+                        "metadata": {
+                          "operationMetadataId": "bcd0ff39-db0d-4879-b84f-66bc910179dc"
+                        },
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "shared_commondataserviceforapps",
+                            "operationId": "UpdateRecord",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                          },
+                          "parameters": {
+                            "entityName": "ntt_tp_publicationses",
+                            "recordId": "@items('a2ePub')?['ntt_tp_publicationsid']",
+                            "item/ntt_sendl2reminder": true
+                          },
+                          "authentication": "@parameters('$authentication')"
+                        }
+                      }
+                    },
+                    "runAfter": {},
+                    "else": {
+                      "actions": {
+                        "testX2": {
+                          "actions": {
+                            "Update_a_row_3": {
+                              "runAfter": {},
+                              "metadata": {
+                                "operationMetadataId": "bcd0ff39-db0d-4879-b84f-66bc910179dc"
+                              },
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "connectionName": "shared_commondataserviceforapps",
+                                  "operationId": "UpdateRecord",
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                                },
+                                "parameters": {
+                                  "entityName": "ntt_tp_publicationses",
+                                  "recordId": "@items('a2ePub')?['ntt_tp_publicationsid']",
+                                  "item/ntt_sendl2reminder": true
+                                },
+                                "authentication": "@parameters('$authentication')"
+                              }
+                            }
+                          },
+                          "runAfter": {},
+                          "else": {
+                            "actions": {
+                              "testX1": {
+                                "actions": {
+                                  "Update_a_row_4": {
+                                    "runAfter": {},
+                                    "metadata": {
+                                      "operationMetadataId": "bcd0ff39-db0d-4879-b84f-66bc910179dc"
+                                    },
+                                    "type": "OpenApiConnection",
+                                    "inputs": {
+                                      "host": {
+                                        "connectionName": "shared_commondataserviceforapps",
+                                        "operationId": "UpdateRecord",
+                                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                                      },
+                                      "parameters": {
+                                        "entityName": "ntt_tp_publicationses",
+                                        "recordId": "@items('a2ePub')?['ntt_tp_publicationsid']",
+                                        "item/ntt_sendl1reminder": true
+                                      },
+                                      "authentication": "@parameters('$authentication')"
+                                    }
+                                  }
+                                },
+                                "runAfter": {},
+                                "expression": {
+                                  "equals": [
+                                    "@variables('strToday')",
+                                    "@variables('strX1')"
+                                  ]
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "8787178e-86e7-4219-a39f-c3d6271bff69"
+                                },
+                                "type": "If"
+                              }
+                            }
+                          },
+                          "expression": {
+                            "equals": [
+                              "@variables('strToday')",
+                              "@variables('strX2')"
+                            ]
+                          },
+                          "metadata": {
+                            "operationMetadataId": "0d3998d6-a1ff-41f6-a382-8ad6da924d17"
+                          },
+                          "type": "If"
+                        }
+                      }
+                    },
+                    "expression": {
+                      "equals": [
+                        "@variables('strDeadline')",
+                        "@variables('strToday')"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "9fc6df86-0849-4455-9d2a-dd5e6b28029f"
+                    },
+                    "type": "If"
+                  }
+                }
+              },
+              "expression": {
+                "equals": [
+                  "@variables('strEventDate')",
+                  "@variables('strToday')"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "6db9ce8d-6fa0-4040-9485-ac7e10888895"
+              },
+              "type": "If"
+            },
+            "Set_variable_2": {
+              "runAfter": {
+                "Set_variable": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "1bbe19c7-88b5-49c2-a140-dbb9e89ac814"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "strX2",
+                "value": "@{formatDateTime(addDays(items('a2ePub')?['ntt_submissiondeadline'],add(1,parameters('TPX2Date (ntt_TPX2Date)'))),'yyyyMMdd')}"
+              }
+            },
+            "Set_variable": {
+              "runAfter": {
+                "Set_EventDate": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "d5ce6b07-b02e-4c8f-9115-d583cecfb0eb"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "strX1",
+                "value": "@{formatDateTime(addDays(items('a2ePub')?['ntt_submissiondeadline'],add(1,parameters('TPX1Date (ntt_TPX1Date)'))),'yyyyMMdd')}"
+              }
+            }
+          },
+          "runAfter": {
+            "Init_strX2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "a7d7febb-e7e6-4567-8fe9-7ee8f76052a7"
+          },
+          "type": "Foreach"
+        },
+        "Init_strDeadline": {
+          "runAfter": {
+            "List_rows": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "e50d0f12-95a9-41d9-9b66-0e5aa6fc7ea0"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strDeadline",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Init_strEventDate": {
+          "runAfter": {
+            "Init_strDeadline": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "6f3fb65d-0fa0-444b-9b83-fdf22d5d288e"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strEventDate",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Init_strToday": {
+          "runAfter": {
+            "Init_strEventDate": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "2958b3fa-9abf-4301-85dc-048a631fdcd7"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strToday",
+                "type": "string",
+                "value": "@{formatDateTime(utcNow(),'yyyyMMdd')}"
+              }
+            ]
+          }
+        },
+        "Init_strX1": {
+          "runAfter": {
+            "Init_strToday": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "d830f75a-e424-48a5-8007-4bea32103d15"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strX1",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Init_strX2": {
+          "runAfter": {
+            "Init_strX1": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "a4a35569-4239-4165-a312-6f5cb815495e"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strX2",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

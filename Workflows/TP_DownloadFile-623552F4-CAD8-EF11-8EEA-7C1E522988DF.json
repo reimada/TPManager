@@ -1,0 +1,1517 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_28495"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_sharepointonline_2": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "ntt_sharedsharepointonline_d7892"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "TPSharepointSite (ntt_TPSharepointSite)": {
+          "defaultValue": "https://enispa.sharepoint.com/sites/TP-Dev",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_TPSharepointSite"
+          }
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {
+            "operationMetadataId": "8d5dbe1a-0c4c-4a01-a31e-b11e8efab59a"
+          },
+          "type": "Request",
+          "kind": "PowerAppV2",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "description": "Immettere l'input",
+                  "title": "PWA_URL",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "text_1": {
+                  "description": "Please enter your input",
+                  "title": "IDPub",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                }
+              },
+              "required": [
+                "text",
+                "text_1"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "controlloallegato": {
+          "runAfter": {
+            "EstrazioneUPNUtenteCorrente": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "1974711c-0ff0-4f99-97a6-69e9772b0122"
+          },
+          "type": "Compose",
+          "inputs": "@split(variables('URL'), '/')"
+        },
+        "ControlloAllegatoCensito": {
+          "actions": {
+            "Compose": {
+              "runAfter": {
+                "CondizionePubSubCriteria": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "6bac8332-2f96-406e-9fcc-b10d58e8fa86"
+              },
+              "type": "Compose",
+              "inputs": "@variables('URL')"
+            },
+            "Compose_2": {
+              "runAfter": {
+                "Compose": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "02de5d83-b151-4169-aef7-12505d7858c8"
+              },
+              "type": "Compose",
+              "inputs": "@variables('URLCensito')"
+            },
+            "Compose_3": {
+              "runAfter": {
+                "Compose_2": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "d3b40c41-aba4-49fe-b652-4979ac02ba0b"
+              },
+              "type": "Compose",
+              "inputs": "@equals(string(variables('URL')), string(variables('URLCensito')))"
+            },
+            "CondizionePubSubCriteria": {
+              "actions": {
+                "Apply_to_each": {
+                  "foreach": "@outputs('EstrazioneInfoPublications')?['body/value']",
+                  "actions": {
+                    "Set_variable_2": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "226c9bb4-9f0f-4138-aa50-fde1718e0e84"
+                      },
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "URLCensito",
+                        "value": "@items('Apply_to_each')?['ntt_attachmentlink']"
+                      }
+                    },
+                    "Condizione": {
+                      "actions": {
+                        "Imposta_variabile": {
+                          "runAfter": {},
+                          "metadata": {
+                            "operationMetadataId": "1d3ca3f9-91b3-44fe-81ca-1663eb42ba01"
+                          },
+                          "type": "SetVariable",
+                          "inputs": {
+                            "name": "URLCensito",
+                            "value": "@{variables('URL')}"
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Set_variable_2": [
+                          "Succeeded"
+                        ]
+                      },
+                      "expression": {
+                        "and": [
+                          {
+                            "equals": [
+                              "@equals(string(variables('PubStatus')), string(876460000))",
+                              "@true"
+                            ]
+                          },
+                          {
+                            "equals": [
+                              "@length(variables('URLCensito'))",
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "cef2d856-b38b-4d0a-9461-52cffb900132"
+                      },
+                      "type": "If"
+                    }
+                  },
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "c08e521e-f95e-4d39-b89c-8067fedad2b3"
+                  },
+                  "type": "Foreach",
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 20
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "EstrazioneInfoPublications": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Apply_to_each_4": {
+                    "foreach": "@outputs('EstrazioneInfoPublications')?['body/value']",
+                    "actions": {
+                      "Apply_to_each_3": {
+                        "foreach": "@outputs('ListRows_-_ClassificazioneCriteria')?['body/value']",
+                        "actions": {
+                          "Set_variable_3": {
+                            "runAfter": {},
+                            "metadata": {
+                              "operationMetadataId": "e5971253-fb64-46a5-a642-33bdba1b561c"
+                            },
+                            "type": "SetVariable",
+                            "inputs": {
+                              "name": "URLCensito",
+                              "value": "@{item()?['ntt_attachmentlink']}"
+                            }
+                          }
+                        },
+                        "runAfter": {
+                          "ListRows_-_ClassificazioneCriteria": [
+                            "Succeeded"
+                          ]
+                        },
+                        "metadata": {
+                          "operationMetadataId": "1bf1104b-40fc-4f91-bc3e-8d78efcf9586"
+                        },
+                        "type": "Foreach"
+                      },
+                      "ListRows_-_ClassificazioneCriteria": {
+                        "runAfter": {},
+                        "metadata": {
+                          "operationMetadataId": "c9110925-f0ed-4a59-a062-56afc227ad6d"
+                        },
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "shared_commondataserviceforapps",
+                            "operationId": "ListRecords",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                          },
+                          "parameters": {
+                            "entityName": "ntt_tp_pub_criterias",
+                            "$select": "ntt_attachmentlink",
+                            "$filter": "_ntt_tp_publications_value eq '@{items('Apply_to_each_4')?['ntt_tp_publicationsid']}' and ntt_attachmentlink ne null"
+                          },
+                          "authentication": "@parameters('$authentication')"
+                        }
+                      }
+                    },
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "8767d250-8bbd-4052-8195-e1e2558ba967"
+                    },
+                    "type": "Foreach"
+                  }
+                }
+              },
+              "expression": {
+                "equals": [
+                  "@length(outputs('controlloallegato'))",
+                  8
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "fad0e8ab-8815-4537-8ad8-0bdd87875042"
+              },
+              "type": "If"
+            },
+            "CondizioneValiditaURL": {
+              "actions": {},
+              "runAfter": {
+                "Compose_3": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Terminate_2": {
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "81be09c6-d8c4-498a-aa7d-53cebc5142d3"
+                    },
+                    "type": "Terminate",
+                    "inputs": {
+                      "runStatus": "Failed",
+                      "runError": {
+                        "code": "400",
+                        "message": "Accesso non consentito"
+                      }
+                    }
+                  }
+                }
+              },
+              "expression": {
+                "equals": [
+                  "@variables('URLCensito')",
+                  "@variables('URL')"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "4c0952a9-4f2b-44b5-a641-6184b98efc7b"
+              },
+              "type": "If"
+            },
+            "EstrazioneInfoPublications": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "3a205059-49b9-47ba-9943-4bc4f2433ffd"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_publicationses",
+                  "$select": "ntt_tp_publicationsid, ntt_attachmentlink",
+                  "$filter": "ntt_id eq '@{variables('IDPub')}'",
+                  "$top": 1
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {
+            "UscitaForzata-copy": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "cd867d50-12e4-4111-bfe8-f3d370b2d150"
+          },
+          "type": "Scope"
+        },
+        "Definizione_Path_Download": {
+          "actions": {
+            "Componi": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "e0eca331-a0ae-4dab-b8a7-0a6d5cddd5dc"
+              },
+              "type": "Compose",
+              "inputs": "@parameters('TPSharepointSite (ntt_TPSharepointSite)')"
+            },
+            "ComponiPathDownload": {
+              "runAfter": {
+                "Componi": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "1bce9bcd-8a14-4efd-be50-b126f74c6417"
+              },
+              "type": "Compose",
+              "inputs": "@replace(variables('URL'), concat(parameters('TPSharepointSite (ntt_TPSharepointSite)'), '/' ), '')"
+            }
+          },
+          "runAfter": {
+            "Estrazioni_Info_Utente_Corrente": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "d7841520-42b6-4f37-b14d-a023e80c6b4b"
+          },
+          "type": "Scope"
+        },
+        "Estrazione_Dati_SPO": {
+          "actions": {
+            "Ottieni_contenuto_file_in_base_al_percorso": {
+              "runAfter": {
+                "Ottieni_metadati_file_in_base_al_percorso": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "9e50fab3-93fe-4f8e-a629-77ffdf2fa0f3"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline_2",
+                  "operationId": "GetFileContentByPath",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('TPSharepointSite (ntt_TPSharepointSite)')",
+                  "path": "@outputs('ComponiPathDownload')",
+                  "inferContentType": true
+                },
+                "authentication": "@parameters('$authentication')"
+              },
+              "operationOptions": "DisableAsyncPattern"
+            },
+            "Ottieni_metadati_file_in_base_al_percorso": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "c3b2d9a9-bf8a-41d5-a3ba-3fec90593224"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline_2",
+                  "operationId": "GetFileMetadataByPath",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('TPSharepointSite (ntt_TPSharepointSite)')",
+                  "path": "@outputs('ComponiPathDownload')"
+                },
+                "authentication": "@parameters('$authentication')"
+              },
+              "operationOptions": "DisableAsyncPattern"
+            }
+          },
+          "runAfter": {
+            "UscitaForzata": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "7a563e3e-49e7-402b-93ed-05e26353d942"
+          },
+          "type": "Scope"
+        },
+        "EstrazioneUPNUtenteCorrente": {
+          "runAfter": {
+            "Initialize_variable_3": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "c8a3c0aa-32c8-4dd5-bc56-b75cdf1ba6a5"
+          },
+          "type": "Compose",
+          "inputs": "@triggerOutputs()['headers']['x-ms-user-email']"
+        },
+        "InitContenutoFile": {
+          "runAfter": {
+            "InitNomeFile": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "1a2a67dc-35cc-4c5a-b30d-09fae4e012af"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "ContenutoFile",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "InitEmailUtenteCorrente": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "fb20a5a6-48b8-43b8-98f9-dffc72bed2f1"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "EmailUtenteCorrente",
+                "type": "string",
+                "value": "@{triggerOutputs()['headers']['x-ms-user-email']}"
+              }
+            ]
+          }
+        },
+        "Initialize_variable": {
+          "runAfter": {
+            "InitPub": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "92e99f11-7e98-4129-904a-73995bb903ab"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "numero row",
+                "type": "integer",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "Initialize_variable_2": {
+          "runAfter": {
+            "Initialize_variable": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "b6280b03-7f39-4349-bab4-9e35151bb673"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "URLCensito",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Initialize_variable_3": {
+          "runAfter": {
+            "Initialize_variable_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "009443a8-788f-451d-b545-b00cc2b16a92"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "exit",
+                "type": "boolean",
+                "value": false
+              }
+            ]
+          }
+        },
+        "InitNomeFile": {
+          "runAfter": {
+            "Initialize_variable_4": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f7f58977-c001-4547-8c8f-1e86f38ae77e"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "NomeFile",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "InitPub": {
+          "runAfter": {
+            "InitURL": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "7adb1c7b-76d8-43c2-b257-fd1932e277be"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "IDPub",
+                "type": "string",
+                "value": "@triggerBody()['text_1']"
+              }
+            ]
+          }
+        },
+        "InitURL": {
+          "runAfter": {
+            "InitContenutoFile": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "898c4fee-bd67-4a82-8401-1399738bccc5"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "URL",
+                "type": "string",
+                "value": "@triggerBody()['text']"
+              }
+            ]
+          }
+        },
+        "Respond_to_a_Power_App_or_flow": {
+          "runAfter": {
+            "Valorizzazione_Output": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f6c1684e-e0f1-45f6-8d15-e9ca1621dbe5"
+          },
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "contenutofilebase64": "@variables('ContenutoFile')",
+              "nomefile": "@variables('NomeFile')"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "contenutofilebase64": {
+                  "title": "ContenutoFileBase64",
+                  "x-ms-dynamically-added": true,
+                  "type": "string"
+                },
+                "nomefile": {
+                  "title": "NomeFile",
+                  "x-ms-dynamically-added": true,
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "Valorizzazione_Output": {
+          "actions": {
+            "ComponiBase64Contenuto": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "3dab02a9-3082-43b5-8ba8-5d2e36a7ec0b"
+              },
+              "type": "Compose",
+              "inputs": "@base64(body('Ottieni_contenuto_file_in_base_al_percorso'))"
+            },
+            "ImpostaContenutoFile": {
+              "runAfter": {
+                "ImpostaNomeFile": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "1fff6c97-a91b-49fa-a7c3-288d5eb7621c"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "ContenutoFile",
+                "value": "@{outputs('ComponiBase64Contenuto')}"
+              }
+            },
+            "ImpostaNomeFile": {
+              "runAfter": {
+                "ComponiBase64Contenuto": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "f3aa4af5-8f83-4ade-88b1-d3d531cd7ee3"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "NomeFile",
+                "value": "@outputs('Ottieni_metadati_file_in_base_al_percorso')?['body/DisplayName']"
+              }
+            }
+          },
+          "runAfter": {
+            "Estrazione_Dati_SPO": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "38eeaaf6-0cf1-4917-9de0-7734af4d10b7"
+          },
+          "type": "Scope"
+        },
+        "Initialize_variable_1": {
+          "runAfter": {
+            "controlloallegato": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "29b75691-f82e-4830-872e-50ae9e59aa41"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "Admin",
+                "type": "boolean",
+                "value": false
+              }
+            ]
+          }
+        },
+        "Initialize_variable_4": {
+          "runAfter": {
+            "InitEmailUtenteCorrente": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "23720549-72cd-46c5-bd03-ff910518eb46"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "EmailConfigurazioniPub",
+                "type": "array"
+              }
+            ]
+          }
+        },
+        "Initialize_variable_5": {
+          "runAfter": {
+            "Initialize_variable_1": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "0e88120a-2506-43f6-97be-0bd711c74474"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "PubDeleted",
+                "type": "boolean",
+                "value": "@false"
+              }
+            ]
+          }
+        },
+        "Initialize_variable_6": {
+          "runAfter": {
+            "Initialize_variable_5": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "8125b4c8-56df-47b5-ad3e-2d1bf77d36d5"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "PubStatus",
+                "type": "string",
+                "value": "@{string('')}"
+              }
+            ]
+          }
+        },
+        "Estrazioni_Info_Utente_Corrente": {
+          "actions": {
+            "InfoUtenteCollegato": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "4f5b3c29-65c6-485c-a220-dd283468e560"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_userses",
+                  "$filter": "ntt_email eq '@{outputs('EstrazioneUPNUtenteCorrente')}'"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "GetAdmin": {
+              "runAfter": {
+                "InfoUtenteCollegato": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "22c935a5-f2dc-4ed5-a36f-a477e3c8f9db"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "Admin",
+                "value": "@first(outputs('InfoUtenteCollegato')?['body/value'])?['ntt_is_admin']"
+              }
+            },
+            "GetIDRequester": {
+              "runAfter": {
+                "GetAdmin": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "27233fc1-c608-41be-8f2b-24eb927e4ecd"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "tpUserRequesterID",
+                "value": "@first(outputs('InfoUtenteCollegato')?['body/value'])?['ntt_id']"
+              }
+            }
+          },
+          "runAfter": {
+            "Initialize_variable_15": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "1631ffa4-b485-42e7-898c-26cf92eac219"
+          },
+          "type": "Scope"
+        },
+        "EstrazioneInformazioni": {
+          "actions": {
+            "ControlloPubblication": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "f6c64221-4a0e-4d30-9e00-724e4c552e73"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_publicationses",
+                  "$select": "ntt_workflowstatus, _ntt_pub_creator_value, ntt_id, ntt_activeusersmail, _ntt_idmainauthor_value, ntt_is_deleted",
+                  "$filter": "ntt_id eq '@{variables('IDPub')}'"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "GetDeleted": {
+              "runAfter": {
+                "ControlloPubblication": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "ae919da7-97ff-4595-a9dd-b2d922499eaa"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "PubDeleted",
+                "value": "@first(outputs('ControlloPubblication')?['body/value'])?['ntt_is_deleted']"
+              }
+            },
+            "GetStatus": {
+              "runAfter": {
+                "GetDeleted": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "8d456ec1-2e9d-438c-9f93-71d2fe3762d1"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "PubStatus",
+                "value": "@string(first(outputs('ControlloPubblication')?['body/value'])?['ntt_workflowstatus'])"
+              }
+            },
+            "ControlloStepReviews_Avanzamentideleghe": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "5b40f364-2550-4258-aa31-dabcbc9822cb"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_pub_stepreviews",
+                  "$filter": "ntt_publicationstring eq '@{variables('IDPub')}' and ntt_tp_usermail eq '@{variables('EmailUtenteCorrente')}'"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "GetReviewer": {
+              "runAfter": {
+                "ControlloStepReviews_Avanzamentideleghe": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "655d06b6-4de5-4b64-809b-05c0f2edbe6f"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "PubReviewrStepUser",
+                "value": "@if(equals(length(outputs('ControlloStepReviews_Avanzamentideleghe')?['body/value']), 0), false, true)"
+              }
+            },
+            "InfoApplicant": {
+              "runAfter": {
+                "ControlloPubblication": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "abe8f80c-1e61-4b3c-9388-98ec07416638"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_userses",
+                  "recordId": "@first(outputs('ControlloPubblication')?['body/value'])?['_ntt_pub_creator_value']",
+                  "$select": "ntt_id"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "GetActiveUsers": {
+              "runAfter": {
+                "GetStatus": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "886931bc-fca4-46a1-b3eb-1d6f4df18fb3"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "EmailConfigurazioniPub",
+                "value": "@split(toLower(if(equals(first(outputs('ControlloPubblication')?['body/value'])?['ntt_activeusersmail'], null),'',first(outputs('ControlloPubblication')?['body/value'])?['ntt_activeusersmail'])), ',')"
+              }
+            },
+            "GetUserApplicant": {
+              "runAfter": {
+                "InfoApplicant": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "8c903230-836d-4a21-8ef3-70234e8e2fbe"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "PubUserCreator",
+                "value": "@equals(variables('tpUserRequesterID'), outputs('InfoApplicant')?['ntt_id'])"
+              }
+            },
+            "GetActiveUser": {
+              "runAfter": {
+                "ComposeActiveUsers": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "50a9c4c1-66b9-407e-a793-21e049cd4cae"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "PubUserActivity",
+                "value": "@not(equals(length(outputs('ComposeActiveUsers')),0))"
+              }
+            },
+            "ComposeActiveUsers": {
+              "runAfter": {
+                "Compose_4": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "f2af1c66-aa41-4141-b45d-7e7ba0742ba7"
+              },
+              "type": "Compose",
+              "inputs": "@intersection(variables('EmailConfigurazioniPub'), createArray(toLower(variables('EmailUtenteCorrente'))))"
+            },
+            "Compose_1": {
+              "runAfter": {
+                "GetActiveUsers": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "f1bf2878-d3c3-415a-a5ff-5c1966e7e347"
+              },
+              "type": "Compose",
+              "inputs": "@variables('EmailConfigurazioniPub')"
+            },
+            "Compose_4": {
+              "runAfter": {
+                "Compose_1": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "def0df63-4700-4014-acab-7636775ef93a"
+              },
+              "type": "Compose",
+              "inputs": "@createArray(toLower(variables('EmailUtenteCorrente')))"
+            }
+          },
+          "runAfter": {
+            "Definizione_Path_Download": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "19677302-2385-452d-98a2-c8cc66103c4d"
+          },
+          "type": "Scope"
+        },
+        "Controllo_Pub_Deleted": {
+          "actions": {
+            "SetExitDeleted": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "f2e71749-98d9-450b-b0d0-025ed14e923d"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "exit",
+                "value": true
+              }
+            }
+          },
+          "runAfter": {
+            "EstrazioneInformazioni": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@variables('PubDeleted')",
+                  "@true"
+                ]
+              }
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "2ee2c8a9-cf37-49b3-86b8-bac884d7cb65"
+          },
+          "type": "If"
+        },
+        "Admin": {
+          "actions": {
+            "Reset_Esito": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "0a3de73a-0c24-4224-aa37-7263f832841e"
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "esito",
+                "value": false
+              }
+            },
+            "Approved_2": {
+              "actions": {},
+              "runAfter": {
+                "Reset_Esito": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@equals(string(variables('PubStatus')), string(876460002))",
+                      "@true"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@variables('exit')",
+                      "@false"
+                    ]
+                  }
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "c35ab77f-0183-4c1c-8db3-aa5d0f70368d"
+              },
+              "type": "If"
+            },
+            "Under_Review_2": {
+              "actions": {},
+              "runAfter": {
+                "Approved_2": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@equals(string(variables('PubStatus')), string(876460001))",
+                      "@true"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@variables('exit')",
+                      "@false"
+                    ]
+                  }
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "c35ab77f-0183-4c1c-8db3-aa5d0f70368d"
+              },
+              "type": "If"
+            },
+            "Draft_2": {
+              "actions": {},
+              "runAfter": {
+                "Under_Review_2": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@equals(string(variables('PubStatus')), string(876460000))",
+                      "@true"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@variables('exit')",
+                      "@false"
+                    ]
+                  }
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "c35ab77f-0183-4c1c-8db3-aa5d0f70368d"
+              },
+              "type": "If"
+            },
+            "Condition_7": {
+              "actions": {
+                "Set_variable_14": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "e7fd1496-abf9-42a6-939a-803bb55f0967"
+                  },
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "exit",
+                    "value": "@true"
+                  }
+                }
+              },
+              "runAfter": {
+                "Draft_2": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@variables('exit')",
+                      "@false"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@not(equals(string(variables('PubStatus')), string(876460000)))",
+                      "@true"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@not(equals(string(variables('PubStatus')), string(876460001)))",
+                      "@true"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@not(equals(string(variables('PubStatus')), string(876460002)))",
+                      "@true"
+                    ]
+                  }
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "251ba01f-b142-45bd-9f1c-70cee5d9fdd3"
+              },
+              "type": "If"
+            }
+          },
+          "runAfter": {
+            "Debug_variabili": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@variables('Admin')",
+                  "@true"
+                ]
+              },
+              {
+                "equals": [
+                  "@variables('exit')",
+                  "@false"
+                ]
+              }
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "3f79d30b-3045-426b-8da6-88c07ae83829"
+          },
+          "type": "If"
+        },
+        "UscitaForzata": {
+          "actions": {
+            "Terminate_1": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "377e24b1-9b13-44f7-b661-33f4d740e73a"
+              },
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed"
+              }
+            }
+          },
+          "runAfter": {
+            "ControlloAllegatoCensito": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@variables('exit')",
+                  "@true"
+                ]
+              }
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f39379f6-d3e0-4e8d-8925-0274ef48f480"
+          },
+          "type": "If"
+        },
+        "Initialize_variable_7": {
+          "runAfter": {
+            "Initialize_variable_6": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "1c02dfa7-ce1d-4966-bdc2-c8c4c4a45d0a"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "PubReviewrStepUser",
+                "type": "boolean",
+                "value": false
+              }
+            ]
+          }
+        },
+        "Initialize_variable_8": {
+          "runAfter": {
+            "Initialize_variable_7": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "326a661d-8563-4f07-870c-a58266d393b6"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "PubUserCreator",
+                "type": "boolean",
+                "value": false
+              }
+            ]
+          }
+        },
+        "Initialize_variable_9": {
+          "runAfter": {
+            "Initialize_variable_8": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f074ab8e-e41a-4efc-9490-28a7eb1fd1bf"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "PubUserMain",
+                "type": "boolean",
+                "value": false
+              }
+            ]
+          }
+        },
+        "Initialize_variable_10": {
+          "runAfter": {
+            "Initialize_variable_9": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "acbe9c60-b1d6-4b88-b2e2-ab2d68253c50"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "PubUserActivity",
+                "type": "boolean",
+                "value": false
+              }
+            ]
+          }
+        },
+        "UscitaForzata-copy": {
+          "actions": {
+            "Terminate_3": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "eb403452-57fc-4aa0-a4f7-9cb0f7dbbe24"
+              },
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Failed"
+              }
+            }
+          },
+          "runAfter": {
+            "Admin": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@variables('exit')",
+                  "@true"
+                ]
+              }
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "0067ccb5-98c2-4a91-9d03-873f30d39be6"
+          },
+          "type": "If"
+        },
+        "Initialize_variable_11": {
+          "runAfter": {
+            "Initialize_variable_10": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f64e6008-a1da-44d2-b9ad-595f2f4b0eb3"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "SwitchDraft",
+                "type": "string",
+                "value": "@string('876460000')"
+              }
+            ]
+          }
+        },
+        "Initialize_variable_12": {
+          "runAfter": {
+            "Initialize_variable_11": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "cf1e416e-946d-40ab-8fdc-47dcf4589a6f"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "SwitchUnderReview",
+                "type": "string",
+                "value": "@string('876460001')"
+              }
+            ]
+          }
+        },
+        "Initialize_variable_13": {
+          "runAfter": {
+            "Initialize_variable_12": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "9d14e6b8-c91b-4992-aa24-bbf90760db09"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "SwitchApproved",
+                "type": "string",
+                "value": "@string('876460002')"
+              }
+            ]
+          }
+        },
+        "Initialize_variable_14": {
+          "runAfter": {
+            "Initialize_variable_13": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "af31c189-643c-4ab2-92c1-183973d0b9ad"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "tpUserRequesterID",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Debug_variabili": {
+          "actions": {
+            "Compose_5": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "fae34e3a-a52c-43d7-b75d-0a56b3709a12"
+              },
+              "type": "Compose",
+              "inputs": "@variables('PubUserCreator')"
+            },
+            "Compose_7": {
+              "runAfter": {
+                "Compose_5": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "55da1ea5-8306-412c-a35e-126f325bfc04"
+              },
+              "type": "Compose",
+              "inputs": "@variables('PubReviewrStepUser')"
+            }
+          },
+          "runAfter": {
+            "Controllo_Pub_Deleted": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "5868ab82-daa4-4958-97fc-3411ddf5c836"
+          },
+          "type": "Scope"
+        },
+        "Initialize_variable_15": {
+          "runAfter": {
+            "Initialize_variable_14": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "00d2161b-f74a-4884-8c60-ac2d1aebec07"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "esito",
+                "type": "boolean",
+                "value": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "templateName": "d73f9d6169314b2e86883f23c003fc22"
+  },
+  "schemaVersion": "1.0.0.0"
+}

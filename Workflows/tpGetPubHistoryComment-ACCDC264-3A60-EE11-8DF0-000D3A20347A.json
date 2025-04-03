@@ -1,0 +1,243 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {
+            "operationMetadataId": "26f01a68-7640-490b-a440-290b8b46cc43"
+          },
+          "type": "Request",
+          "kind": "Button",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "PubId",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Please enter your input",
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "List_rows": {
+          "runAfter": {
+            "Initialize_variable": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "1a0b281a-dab2-44f1-920e-e4ae466707b6"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_entrieses",
+              "$filter": "ntt_pubidstring eq '@{triggerBody()['text']}'",
+              "$orderby": "ntt_name desc"
+            },
+            "authentication": {
+              "type": "Raw",
+              "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+            }
+          }
+        },
+        "Initialize_variable": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "d7dc9dfc-b698-4266-bccd-098d2b663441"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strContent",
+                "type": "string",
+                "value": "<div></div><div><strong>Publication History and comments</strong></div><div></div>"
+              }
+            ]
+          }
+        },
+        "Apply_to_each": {
+          "foreach": "@outputs('List_rows')?['body/value']",
+          "actions": {
+            "Append_to_strComment_RichTComment": {
+              "runAfter": {
+                "Append_to_string_variable_2": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "0eeafce4-79ab-4a67-9df4-b0c9fe6301cd"
+              },
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strContent",
+                "value": "@concat('<div>',items('Apply_to_each')?['ntt_richtcomment'],'</div><div></div>')"
+              }
+            },
+            "Append_to_string_variable_2": {
+              "runAfter": {
+                "Switch": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "2c90ca99-1268-414e-8b69-e026ffaaf5d6"
+              },
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strContent",
+                "value": "@concat('<div>',formatDateTime(items('Apply_to_each')?['createdon'],'dd-MMM-yyyy'),'</div>')"
+              }
+            },
+            "Switch": {
+              "runAfter": {},
+              "cases": {
+                "Case_Consult": {
+                  "case": 876460008,
+                  "actions": {
+                    "Append_to_string_variable": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "0eeafce4-79ab-4a67-9df4-b0c9fe6301cd"
+                      },
+                      "type": "AppendToStringVariable",
+                      "inputs": {
+                        "name": "strContent",
+                        "value": "@concat('<div>',items('Apply_to_each')?['ntt_username'],' - ','involved people as consulted', ' - ',items('Apply_to_each')?['ntt_entry_type@OData.Community.Display.V1.FormattedValue'],'</div>')"
+                      }
+                    }
+                  }
+                },
+                "Case_Submit": {
+                  "case": 876460001,
+                  "actions": {
+                    "Append_to_string_variable_4": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "38a5a290-9af2-40a0-bc46-f32ffaa84374"
+                      },
+                      "type": "AppendToStringVariable",
+                      "inputs": {
+                        "name": "strContent",
+                        "value": "@concat('<div>',items('Apply_to_each')?['ntt_username'],' - ', items('Apply_to_each')?['ntt_roles@OData.Community.Display.V1.FormattedValue'], ' - ',items('Apply_to_each')?['ntt_entry_type@OData.Community.Display.V1.FormattedValue'],if(and(items('Apply_to_each')?['ntt_step1skipped'], items('Apply_to_each')?['ntt_step2skipped']),' and skipped steps 1 and 2',if(items('Apply_to_each')?['ntt_step1skipped'],' and skipped steps 1',if(items('Apply_to_each')?['ntt_step2skipped'],' and skipped steps 2',''))),'</div>')"
+                      }
+                    }
+                  }
+                }
+              },
+              "default": {
+                "actions": {
+                  "Append_to_string_variable_3": {
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "de5a6501-cc30-4b8a-a6ad-8d9e54daff9f"
+                    },
+                    "type": "AppendToStringVariable",
+                    "inputs": {
+                      "name": "strContent",
+                      "value": "@concat('<div>',items('Apply_to_each')?['ntt_username'],' - ', items('Apply_to_each')?['ntt_roles@OData.Community.Display.V1.FormattedValue'], ' - ',items('Apply_to_each')?['ntt_entry_type@OData.Community.Display.V1.FormattedValue'],'</div>')"
+                    }
+                  }
+                }
+              },
+              "expression": "@items('Apply_to_each')?['ntt_entry_type']",
+              "metadata": {
+                "operationMetadataId": "4f2924a1-79f7-4b1a-8b86-0cee25198838"
+              },
+              "type": "Switch"
+            }
+          },
+          "runAfter": {
+            "List_rows": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "0990def8-3d95-4b3b-abe4-31cfb0e94fae"
+          },
+          "type": "Foreach"
+        },
+        "Compose": {
+          "runAfter": {
+            "Apply_to_each": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "2053cf7e-15bc-4910-a693-4c5854b2aea1"
+          },
+          "type": "Compose",
+          "inputs": "@variables('strContent')"
+        },
+        "Respond_to_a_PowerApp_or_flow": {
+          "runAfter": {
+            "Compose": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "eb8d8a9a-a2fb-41ec-9032-b2ca9c8e5298"
+          },
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "content": "@variables('strContent')"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "content": {
+                  "title": "Content",
+                  "x-ms-dynamically-added": true,
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

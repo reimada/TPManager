@@ -1,0 +1,380 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "TPNotifyReminderKMSTeamMail (ntt_TPNotifyReminderKMSTeamMail)": {
+          "defaultValue": "KMS.team@eni.com",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_TPNotifyReminderKMSTeamMail"
+          }
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "d421ad98-c64c-4031-8ca7-e5eb410f517f"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 4,
+              "subscriptionRequest/entityname": "ntt_tp_pub_stepreview",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "ntt_isactive"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "List_rows": {
+          "runAfter": {
+            "Get_a_row_by_ID": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "ae00527c-9bec-437f-8b98-945852328ead"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_pub_stepreviews",
+              "$filter": "ntt_publicationdescid eq '@{outputs('Get_a_row_by_ID')?['body/ntt_publicationdescid']}'"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Get_a_row_by_ID": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "9831f54e-be32-427b-956e-be60ebbcf8cc"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_pub_stepreviews",
+              "recordId": "@triggerOutputs()?['body/ntt_tp_pub_stepreviewid']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Initialize_variable": {
+          "runAfter": {
+            "List_rows": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "5befe909-811e-4b44-99e4-61c8e355515f"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strActiveUsers",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Apply_to_each": {
+          "foreach": "@outputs('List_rows')?['body/value']",
+          "actions": {
+            "Condition": {
+              "actions": {
+                "Append_to_string_variable": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "9cc23aa0-9e42-4c4e-aa86-f7ec4a8ec62a"
+                  },
+                  "type": "AppendToStringVariable",
+                  "inputs": {
+                    "name": "strActiveUsers",
+                    "value": "@{items('Apply_to_each')?['ntt_tp_username']};"
+                  }
+                },
+                "Append_to_string_variable_2": {
+                  "runAfter": {
+                    "Append_to_string_variable": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "88e4c4a8-163b-4433-8a8a-cc27e49a5706"
+                  },
+                  "type": "AppendToStringVariable",
+                  "inputs": {
+                    "name": "strActiveUserMail",
+                    "value": "@{items('Apply_to_each')?['ntt_tp_usermail']},"
+                  }
+                }
+              },
+              "runAfter": {},
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@items('Apply_to_each')?['ntt_isactive']",
+                      true
+                    ]
+                  },
+                  {
+                    "not": {
+                      "contains": [
+                        "@variables('strActiveUsers')",
+                        "@items('Apply_to_each')?['ntt_tp_username']"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "86a54abc-24ac-422f-9757-b1740cdd532d"
+              },
+              "type": "If"
+            }
+          },
+          "runAfter": {
+            "Initialize_variable_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "7fd1b71f-6b8d-4469-9211-04ed5d6372eb"
+          },
+          "type": "Foreach"
+        },
+        "Update_a_row": {
+          "runAfter": {
+            "Append_to_string_variable_6": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "098548e7-3b8e-4776-ae2b-1c7aeb6f4558"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_publicationses",
+              "recordId": "@triggerOutputs()?['body/_ntt_tp_publications_value']",
+              "item/ntt_activeusers": "@variables('strActiveUsers')",
+              "item/ntt_activeusersmail": "@variables('strActiveUserMail')"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Initialize_variable_2": {
+          "runAfter": {
+            "Initialize_variable": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "034dee69-5244-4c6a-8046-93a192b6bd88"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strActiveUserMail",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "Append_to_string_variable_3": {
+          "runAfter": {
+            "Get_tpPub": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "bdd4fa26-0214-43c2-a68c-beb15c73b0bd"
+          },
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strActiveUserMail",
+            "value": "@{outputs('Get_tpPub')?['body/ntt_authorsemail']},"
+          }
+        },
+        "Get_tpPub": {
+          "runAfter": {
+            "Apply_to_each": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "75706111-c355-4450-a023-50ac144f6572"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_publicationses",
+              "recordId": "@outputs('Get_a_row_by_ID')?['body/_ntt_tp_publications_value']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Condition_2": {
+          "actions": {
+            "Append_to_string_variable_4": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "bf2054e8-84db-4a32-87b5-2553a1aba446"
+              },
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strActiveUserMail",
+                "value": "@{outputs('Get_tpPub')?['body/ntt_extmainauthor']},"
+              }
+            }
+          },
+          "runAfter": {
+            "Append_to_string_variable_3": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "equals": [
+              "@outputs('Get_tpPub')?['body/ntt_is_extauthor']",
+              "@true"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "7f998cfc-6585-4282-a891-3aeb7b023eea"
+          },
+          "type": "If"
+        },
+        "Condition_3": {
+          "actions": {
+            "List_rows_2": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "687d1db3-8905-4770-9994-fe1630f92eb4"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "ntt_tp_pub_coauthorenis",
+                  "$filter": "ntt_publicationdesc eq '@{outputs('Get_tpPub')?['body/ntt_id']}'"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Apply_to_each_2": {
+              "foreach": "@outputs('List_rows_2')?['body/value']",
+              "actions": {
+                "Append_to_string_variable_5": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "1daab24c-a7de-4223-80fb-ed5b192edebc"
+                  },
+                  "type": "AppendToStringVariable",
+                  "inputs": {
+                    "name": "strActiveUserMail",
+                    "value": "@{items('Apply_to_each_2')?['ntt_mailuser']},"
+                  }
+                }
+              },
+              "runAfter": {
+                "List_rows_2": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "80403538-3dbb-41fe-b922-9603d3284a73"
+              },
+              "type": "Foreach"
+            }
+          },
+          "runAfter": {
+            "Condition_2": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "equals": [
+              "@outputs('Get_tpPub')?['body/ntt_is_notifymailcoauthoreni']",
+              ""
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "81fc778c-b143-4ea1-85ba-aa43d0340e03"
+          },
+          "type": "If"
+        },
+        "Append_to_string_variable_6": {
+          "runAfter": {
+            "Condition_3": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "0daebdef-fef0-426c-a80c-9a7c30037545"
+          },
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "strActiveUserMail",
+            "value": "@parameters('TPNotifyReminderKMSTeamMail (ntt_TPNotifyReminderKMSTeamMail)')"
+          }
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

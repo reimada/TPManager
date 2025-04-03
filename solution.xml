@@ -1,0 +1,174 @@
+<ImportExportXml version="9.2.25023.188" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.25023.188" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="9.2.25031.00216">
+  <SolutionManifest>
+    <UniqueName>TPManager</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="TPManager" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions />
+    <Version>1.0.0.111</Version>
+    <Managed>0</Managed>
+    <Publisher>
+      <UniqueName>NTT_Data</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="NTT Data" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions />
+      <EMailAddress xsi:nil="true"></EMailAddress>
+      <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
+      <CustomizationPrefix>ntt</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>87646</CustomizationOptionValuePrefix>
+      <Addresses>
+        <Address>
+          <AddressNumber>1</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+          <City xsi:nil="true"></City>
+          <County xsi:nil="true"></County>
+          <Country xsi:nil="true"></Country>
+          <Fax xsi:nil="true"></Fax>
+          <FreightTermsCode xsi:nil="true"></FreightTermsCode>
+          <ImportSequenceNumber xsi:nil="true"></ImportSequenceNumber>
+          <Latitude xsi:nil="true"></Latitude>
+          <Line1 xsi:nil="true"></Line1>
+          <Line2 xsi:nil="true"></Line2>
+          <Line3 xsi:nil="true"></Line3>
+          <Longitude xsi:nil="true"></Longitude>
+          <Name xsi:nil="true"></Name>
+          <PostalCode xsi:nil="true"></PostalCode>
+          <PostOfficeBox xsi:nil="true"></PostOfficeBox>
+          <PrimaryContactName xsi:nil="true"></PrimaryContactName>
+          <ShippingMethodCode>1</ShippingMethodCode>
+          <StateOrProvince xsi:nil="true"></StateOrProvince>
+          <Telephone1 xsi:nil="true"></Telephone1>
+          <Telephone2 xsi:nil="true"></Telephone2>
+          <Telephone3 xsi:nil="true"></Telephone3>
+          <TimeZoneRuleVersionNumber xsi:nil="true"></TimeZoneRuleVersionNumber>
+          <UPSZone xsi:nil="true"></UPSZone>
+          <UTCOffset xsi:nil="true"></UTCOffset>
+          <UTCConversionTimeZoneCode xsi:nil="true"></UTCConversionTimeZoneCode>
+        </Address>
+        <Address>
+          <AddressNumber>2</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+          <City xsi:nil="true"></City>
+          <County xsi:nil="true"></County>
+          <Country xsi:nil="true"></Country>
+          <Fax xsi:nil="true"></Fax>
+          <FreightTermsCode xsi:nil="true"></FreightTermsCode>
+          <ImportSequenceNumber xsi:nil="true"></ImportSequenceNumber>
+          <Latitude xsi:nil="true"></Latitude>
+          <Line1 xsi:nil="true"></Line1>
+          <Line2 xsi:nil="true"></Line2>
+          <Line3 xsi:nil="true"></Line3>
+          <Longitude xsi:nil="true"></Longitude>
+          <Name xsi:nil="true"></Name>
+          <PostalCode xsi:nil="true"></PostalCode>
+          <PostOfficeBox xsi:nil="true"></PostOfficeBox>
+          <PrimaryContactName xsi:nil="true"></PrimaryContactName>
+          <ShippingMethodCode>1</ShippingMethodCode>
+          <StateOrProvince xsi:nil="true"></StateOrProvince>
+          <Telephone1 xsi:nil="true"></Telephone1>
+          <Telephone2 xsi:nil="true"></Telephone2>
+          <Telephone3 xsi:nil="true"></Telephone3>
+          <TimeZoneRuleVersionNumber xsi:nil="true"></TimeZoneRuleVersionNumber>
+          <UPSZone xsi:nil="true"></UPSZone>
+          <UTCOffset xsi:nil="true"></UTCOffset>
+          <UTCConversionTimeZoneCode xsi:nil="true"></UTCConversionTimeZoneCode>
+        </Address>
+      </Addresses>
+    </Publisher>
+    <RootComponents>
+      <RootComponent type="1" schemaName="ntt_tptooltips" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_activitytypes" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_appcategories" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_business" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_delegationmgmt" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_doctypes" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_entries" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_events" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_kms_users" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_maintopics" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_publications" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_pub_coauthoreni" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_pub_criteria" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_pub_linkedsubmissions" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_pub_maintopic" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_pub_stepreview" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_pub_tags" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_subbusiness" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_tags" behavior="0" />
+      <RootComponent type="1" schemaName="ntt_tp_users" behavior="0" />
+      <RootComponent type="9" schemaName="ntt_choice" behavior="0" />
+      <RootComponent type="9" schemaName="ntt_entrytypes" behavior="0" />
+      <RootComponent type="9" schemaName="ntt_eventtype" behavior="0" />
+      <RootComponent type="9" schemaName="ntt_neweventtypes" behavior="0" />
+      <RootComponent type="9" schemaName="ntt_pubworkflostatus" behavior="0" />
+      <RootComponent type="9" schemaName="ntt_questchoice" behavior="0" />
+      <RootComponent type="9" schemaName="ntt_stepstatus" behavior="0" />
+      <RootComponent type="9" schemaName="ntt_tagtypes" behavior="0" />
+      <RootComponent type="9" schemaName="ntt_userroles" behavior="0" />
+      <RootComponent type="20" id="{b608b684-b924-ee11-9cbc-000d3a2004d7}" behavior="0" />
+      <RootComponent type="29" id="{02abddb2-2777-ee11-8179-000d3a246956}" behavior="0" />
+      <RootComponent type="29" id="{06771707-f72e-ee11-bdf4-000d3a2004d7}" behavior="0" />
+      <RootComponent type="29" id="{0aeb70ea-9260-ee11-8df0-000d3a2d085b}" behavior="0" />
+      <RootComponent type="29" id="{1e5374b5-af76-ee11-8179-000d3a20347a}" behavior="0" />
+      <RootComponent type="29" id="{416fed5e-6119-ee11-8f6d-000d3a2d085b}" behavior="0" />
+      <RootComponent type="29" id="{568854bb-9e5f-ee11-8df0-000d3a2004d7}" behavior="0" />
+      <RootComponent type="29" id="{5bad9d65-465c-ee11-be6e-000d3a20347a}" behavior="0" />
+      <RootComponent type="29" id="{60f4c436-7a60-ee11-8df0-000d3a20347a}" behavior="0" />
+      <RootComponent type="29" id="{61a6e8e0-f14d-ee11-be6e-000d3a20347a}" behavior="0" />
+      <RootComponent type="29" id="{623552f4-cad8-ef11-8eea-7c1e522988df}" behavior="0" />
+      <RootComponent type="29" id="{63791e8e-7160-ee11-8df0-000d3a20347a}" behavior="0" />
+      <RootComponent type="29" id="{6c3354d0-a533-ef11-8409-7c1e5226b0ec}" behavior="0" />
+      <RootComponent type="29" id="{782f405e-525c-ee11-be6e-000d3a2d085b}" behavior="0" />
+      <RootComponent type="29" id="{79f11740-b066-ee11-9ae7-000d3a2d085b}" behavior="0" />
+      <RootComponent type="29" id="{841a259e-9060-ee11-8df0-000d3a2d085b}" behavior="0" />
+      <RootComponent type="29" id="{87315354-305e-ee11-be6f-000d3a2004d7}" behavior="0" />
+      <RootComponent type="29" id="{8825b1e9-885b-ee11-be6e-000d3a2004d7}" behavior="0" />
+      <RootComponent type="29" id="{8bdef1b7-bb4d-ee11-be6e-000d3a20347a}" behavior="0" />
+      <RootComponent type="29" id="{8d76e53f-6e60-ee11-8df0-000d3a2d085b}" behavior="0" />
+      <RootComponent type="29" id="{ab5dc047-1198-ee11-be37-000d3a2004d7}" behavior="0" />
+      <RootComponent type="29" id="{ac3b7b4f-b677-ee11-8179-000d3a2004d7}" behavior="0" />
+      <RootComponent type="29" id="{accdc264-3a60-ee11-8df0-000d3a20347a}" behavior="0" />
+      <RootComponent type="29" id="{bb30c355-c35e-ee11-be6f-000d3a2004d7}" behavior="0" />
+      <RootComponent type="29" id="{c5cff0c7-ea13-ee11-8f6d-000d3a2004d7}" behavior="0" />
+      <RootComponent type="29" id="{c617e7ed-8460-ee11-8df0-000d3a2004d7}" behavior="0" />
+      <RootComponent type="29" id="{c9e77878-f8f3-ed11-8848-000d3a2d085b}" behavior="0" />
+      <RootComponent type="29" id="{d22b7049-bf77-ee11-8179-000d3a20347a}" behavior="0" />
+      <RootComponent type="29" id="{d8ae353b-4b5e-ee11-be6f-000d3a246956}" behavior="0" />
+      <RootComponent type="29" id="{d93a25f2-b34d-ee11-be6e-000d3a2004d7}" behavior="0" />
+      <RootComponent type="29" id="{d981b537-b060-ee11-8df0-000d3a20347a}" behavior="0" />
+      <RootComponent type="29" id="{ddadaf1b-615c-ee11-be6e-000d3a2d085b}" behavior="0" />
+      <RootComponent type="29" id="{e02f3121-5d60-ee11-8df0-000d3a20347a}" behavior="0" />
+      <RootComponent type="29" id="{e4c863a3-3818-ef11-9f89-0022487fb7f7}" behavior="0" />
+      <RootComponent type="29" id="{f3189265-c84d-ee11-be6e-000d3a2004d7}" behavior="0" />
+      <RootComponent type="62" schemaName="ntt_AdminTP" behavior="0" />
+      <RootComponent type="66" schemaName="ntt_PCFDownload.PCFDownload" behavior="0" />
+      <RootComponent type="80" schemaName="ntt_AdminTP" behavior="0" />
+      <RootComponent type="300" schemaName="ntt_tpmanager_714ae" behavior="0" />
+    </RootComponents>
+    <MissingDependencies>
+      <MissingDependency>
+        <Required type="1" schemaName="environmentvariabledefinition" displayName="Environment Variable Definition" solution="EnvironmentVariables (1.0.2406.4)">
+          <package appName="EnvironmentVariables" version="1.0.2406.4">EnvironmentVariablesSolutionAnchor (1.0.2406.4)</package>
+        </Required>
+        <Dependent type="300" schemaName="ntt_tpmanager_714ae" displayName="TPManager" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="environmentvariablevalue" displayName="Environment Variable Value" solution="EnvironmentVariables (1.0.2406.4)">
+          <package appName="EnvironmentVariables" version="1.0.2406.4">EnvironmentVariablesSolutionAnchor (1.0.2406.4)</package>
+        </Required>
+        <Dependent type="300" schemaName="ntt_tpmanager_714ae" displayName="TPManager" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="flowrun" displayName="Flow Run" solution="MicrosoftFlowExtensionsOnline (1.9.1.1)">
+          <package appName="MicrosoftFlowExtensionsCore" version="1.9.1.1">MicrosoftFlowExtensionsAnchor (1.9.1.1)</package>
+        </Required>
+        <Dependent type="29" displayName="KMSGetUser" id="{8825b1e9-885b-ee11-be6e-000d3a2004d7}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="61" schemaName="msdyn_/Images/AppModule_Default_Icon.png" displayName="msdyn_/Images/AppModule_Default_Icon.png" solution="AppModuleWebResources (2.5)" />
+        <Dependent type="80" schemaName="ntt_AdminTP" displayName="AdminTP" />
+      </MissingDependency>
+    </MissingDependencies>
+  </SolutionManifest>
+</ImportExportXml>

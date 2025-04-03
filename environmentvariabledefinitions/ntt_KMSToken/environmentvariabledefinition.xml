@@ -1,0 +1,11 @@
+<environmentvariabledefinition schemaname="ntt_KMSToken">
+  <defaultvalue>821b33f0-a74d-45d3-bc21-eb47d842f552</defaultvalue>
+  <displayname default="KMSToken">
+    <label description="KMSToken" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.7</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

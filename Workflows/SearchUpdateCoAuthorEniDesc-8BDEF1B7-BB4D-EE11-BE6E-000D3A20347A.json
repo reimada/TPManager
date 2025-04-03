@@ -1,0 +1,165 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_6151d"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "c9814cda-cfab-495f-aa48-693d010c95ee"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "ntt_tp_pub_coauthoreni",
+              "subscriptionRequest/scope": 2,
+              "subscriptionRequest/runas": 1
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "GetMyPubCoAuthEni": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "c9876da0-9d3b-4d5b-b187-d50ad5d82fe3"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_pub_coauthorenis",
+              "recordId": "@triggerOutputs()?['body/ntt_tp_pub_coauthoreniid']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Init_strCoAuthEni": {
+          "runAfter": {
+            "GetMyPubCoAuthEni": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "effa32f0-c1e7-4836-b26b-c70d8fd75ace"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "strCoAuthEni",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "List_rows_CoAuthEni": {
+          "runAfter": {
+            "Init_strCoAuthEni": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "d6f046bd-7902-4688-bff0-2bc4c271deb8"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_pub_coauthorenis",
+              "$filter": "ntt_publicationdesc eq '@{outputs('GetMyPubCoAuthEni')?['body/ntt_publicationdesc']}'"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "CoAuthDesc": {
+          "foreach": "@outputs('List_rows_CoAuthEni')?['body/value']",
+          "actions": {
+            "Append_to_string_variable": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "4c75fda1-1870-4c0e-9c9c-2512428bd1cf"
+              },
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "strCoAuthEni",
+                "value": "@{items('CoAuthDesc')?['ntt_userdesc']};"
+              }
+            }
+          },
+          "runAfter": {
+            "List_rows_CoAuthEni": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "67308f76-ffec-4da0-9f64-0fa2345b6379"
+          },
+          "type": "Foreach"
+        },
+        "Update_a_row": {
+          "runAfter": {
+            "CoAuthDesc": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "9de8f64a-92ef-4793-bcd5-a8b17b2e5ea1"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ntt_tp_publicationses",
+              "recordId": "@triggerOutputs()?['body/_ntt_idpublication_value']",
+              "item/ntt_coauthorsenidesc": "@variables('strCoAuthEni')"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

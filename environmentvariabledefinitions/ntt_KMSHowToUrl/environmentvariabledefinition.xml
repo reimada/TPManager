@@ -1,0 +1,11 @@
+<environmentvariabledefinition schemaname="ntt_KMSHowToUrl">
+  <defaultvalue>https://lab-kms.eni.com/how-to</defaultvalue>
+  <displayname default="KMSHowToUrl">
+    <label description="KMSHowToUrl" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.45</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

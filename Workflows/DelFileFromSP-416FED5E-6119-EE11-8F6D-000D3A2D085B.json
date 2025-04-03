@@ -1,0 +1,134 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline_1": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "ntt_sharedsharepointonline_d7892"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "TPSharepointSite (ntt_TPSharepointSite)": {
+          "defaultValue": "https://enispa.sharepoint.com/sites/TP-Dev",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_TPSharepointSite"
+          }
+        },
+        "TPSharepointDocLibrary (ntt_TPSharepointDocLibrary)": {
+          "defaultValue": "84FB1E1D-1B1F-4DDF-AEB1-93EAB5E86E2A",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ntt_TPSharepointDocLibrary"
+          }
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {
+            "operationMetadataId": "a3bd5301-0c21-4f64-8c48-e99931b3dcdf"
+          },
+          "type": "Request",
+          "kind": "PowerAppV2",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "FileName",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "FileName",
+                  "x-ms-content-hint": "TEXT"
+                },
+                "text_1": {
+                  "title": "IDPub",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "IDPub",
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text",
+                "text_1"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Get_files_(properties_only)": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "0daacca2-97e7-4072-bee1-405993c15313"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline_1",
+              "operationId": "GetFileItems",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('TPSharepointSite (ntt_TPSharepointSite)')",
+              "table": "@parameters('TPSharepointDocLibrary (ntt_TPSharepointDocLibrary)')",
+              "$filter": "TPFilename eq '@{triggerBody()['text_1']}_@{triggerBody()['text']}'"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Apply_to_each": {
+          "foreach": "@outputs('Get_files_(properties_only)')?['body/value']",
+          "actions": {
+            "Delete_file": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "3d62fddd-e685-4779-a87e-c01b701fec86"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline_1",
+                  "operationId": "DeleteFile",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('TPSharepointSite (ntt_TPSharepointSite)')",
+                  "id": "@items('Apply_to_each')?['{Identifier}']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {
+            "Get_files_(properties_only)": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "b6ce679b-baaa-4541-a4aa-0c747ae41750"
+          },
+          "type": "Foreach"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

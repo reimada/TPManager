@@ -1,0 +1,4 @@
+ntt_kmsid: =ntt_IDTag.ntt_kmsid
+ntt_publicationdesc: =ntt_IDPublication.ntt_id
+ntt_tagdesc: =ntt_IDTag.ntt_name
+ntt_tagtype: =If(ntt_IDTag.ntt_type=global_ntt_tagtypes.'0',0,1)

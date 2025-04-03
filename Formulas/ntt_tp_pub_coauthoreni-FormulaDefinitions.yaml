@@ -1,0 +1,4 @@
+ntt_mailuser: =ntt_IDUser.ntt_email
+ntt_publicationdesc: =ntt_IDPublication.ntt_id
+ntt_userdesc: =ntt_IDUser.ntt_displayname
+ntt_userkmsid: =ntt_IDUser.ntt_kmsid

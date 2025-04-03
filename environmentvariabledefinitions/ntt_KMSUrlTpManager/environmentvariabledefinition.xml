@@ -1,0 +1,11 @@
+<environmentvariabledefinition schemaname="ntt_KMSUrlTpManager">
+  <defaultvalue>https://lab-kms.eni.com/tech-pub/manage?pubId=</defaultvalue>
+  <displayname default="KMSUrlTpManager">
+    <label description="KMSUrlTpManager" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.12</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>
